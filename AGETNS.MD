@@ -1,23 +1,22 @@
-This software is a graphical web interface for the latex auto-multiple-choice software with AI features. The language of the project is French.
+This software is a graphical web interface for the latex auto-multiple-choice software with AI features. The main language of the project is French.
 
 The backend uses python/flask and auto-multiple-choice
 
+postgresql db with users (instructors), columns: email, user_uuid, salt, salted_password_hash, one_time_pwd, one_time_pwd_expires_at, verification_code
+
 The frontend uses typscript
 
-Backend:
-
-postgresql db with users (instructors), columns: email, user_uuid, salt, salted_password_hash, one_time_pwd, one_time_pwd_expires_at, verification_code
 
 Directory structure:
 
 {user_uuid}/
 -user_defaults.sqlite db with columns first_name, last_name, institution_name, student_instructions, coding_explanation, email_subject, email_body
 -classes.sqlite db with columns class_title and student_list
--quizes.sqlite db with columns quiz_uuid, quiz_title, creation_date, quiz_state, id_coding, number_of_questions, institution_name, student_instructions, coding_explanation, email_subject, email_body, class_title, date_of_quiz, duration
+-quizes.sqlite db with columns quiz_uuid, quiz_title, creation_date, quiz_state, id_coding, number_of_questions, institution_name, student_instructions, coding_explanation, email_subject, email_body, class_title, date_of_quiz, duration, random_question_order, random_answer_order
 -several {list_uuid}.csv
 
 -{user_uuid}/{quiz_uuid}
---questions.sqlite (columns: question_text, question_type, subject, answer_option1, answer_option2, answer_option3, answer_option4, answer_option5, answer_option6, answer_option7, answer_option8, answer_option9, answer_option10, correct_answer, points, question_number, illustration_filename, illustration_width)
+--questions.sqlite (columns: question_text, question_type, subject_title, subject_uuid, answer_option1, answer_option2, answer_option3, answer_option4, answer_option5, answer_option6, answer_option7, answer_option8, answer_option9, answer_option10, correct_answer, points, question_number, illustration_filename, illustration_width)
 --list.csv
 --illustrations (md5 hash of the file + ".png" or ".jpg"/".jpeg")
 --{user_uuid}/{quiz_uuid}/amc_session
@@ -52,12 +51,12 @@ C Settings page
     download all my data: creates zip archive of {user_uuid} directory and lets user download it
     delete account: confirm first, logs out user, deletes {user_uuid} directory and removes corresponding line from users postgresql db
 
-D Help page: More detailed information on features of the software and how to use it. Possbility to send e-mails for support
+D Help page: More detailed information on features of the software and how to use it. Possibility to send e-mails for support. Use email_service for that.
 
 
 E Quiz page:
     Contains tabs for:
-    E1 Generalities: Parameters of the quiz, UI elements to enter the following information, load from (and save to once the button is pressed) to quizes.sqlite:
+    E1 Generalities: Parameters of the quiz, UI elements to enter the following information, load from (and save to) to quizes.sqlite:
         E1a: quiz_title (required, cannot save if field is empty)
         E1b: institution_name
         E1c: Class title (editable class_title, but also drop down menu with all class_title entries from {user_uuid}/classes.sqlite to select from)
@@ -65,31 +64,54 @@ E Quiz page:
         E1e: duration
         E1f: student_instructions
         E1g: Student identification via coding for student ID (if yes id_coding saves number of digits and student explanation on coding their IDs coding_explanation, if no id_coding=-1)
-       Save button
-    E2 Questions: Add and edit questions of the quiz load from (and save to once the button is pressed) to questions.sqlite:
-        Question attributes: question_text, question_type (simple, multiple-choice, or open), subject, answer_option1 (up to 10) (one in case of open question, at least two in case of simple or multiple-choice question), correct_answer1 (up to 10) (true of false), points, question_number (Q1, Q2, Q3 etc, always kept in the order in which the questions are displayed, changes on reordering), illustration_filename, illustration_width
-        Possbility to reorder questions within a subject (questions are grouped by subejcts)
-        Possbility to reorder subjects
-        Possbility to add questions with AI based on subject and/or class material (upload txt or pdf file, max 5 MB), instructor can choose difficulty (easy, average, hard), number of questions to be generated, type of question to be generated (simple, multiple-choice, open)
-    E3 Create subject: Compile and export pdf for students
-        Ai verify subject button: check concurrently in 3 different prompts for spelling/grammar, correctness of questions and answers, and latex syntax
-        Export AMC latex file
-        Export pdf with answers
-        Export pdf for n students (possibility to specify to randomize order of questions and answer options)
-    E4 Evaluate: Grade student copies
-        Upload pdf with student copies
-        Select CSV student list corresponding to the class (see parameters page), or upload student list or leave blanc
-        Button to analyze student copies
+    E2 Questions (to be displayed as soon as generaties are saved, i.e. quiz_title is in the corresponding row of quizes.sqlite): Add and edit questions of the quiz load from (and save to) questions.sqlite:
+        Question attributes: question_text (not editable if quiz_state is "locked"), question_type ("simple", "multiple-choice", or "open"; not editable if quiz_state is "locked"), subject_title (not editable if quiz_state is "locked"), subject_uuid (generated in case of a new subject title), answer_option1 (up to 10) (one in case of open question, at least two in case of simple or multiple-choice question, not editable if quiz_state is "locked"), correct_answer1 (up to 10) (true or false, always editable), points (always editable), question_number (Q1, Q2, Q3 etc, always kept in the order in which the questions are displayed, changes on reordering, automatic - never editable), illustration_filename, illustration_width  (not editable if quiz_state is "locked")
+        Possbility to upload an illustration to accompagy a question of type .png or .jpg"/".jpeg, max. 5MB, to be saved as {user_uuid}/{quiz_uuid}/{image_md5_sum}.{png/jpg}. Can't be changed if quiz_state is "locked". A thumbnail of the illustration is shown after upload.
+        Possbility to reorder questions within a subject (questions are grouped by subejcts). Can't be changed if quiz_state is "locked".
+        Possbility to reorder subjects. Can't be changed if quiz_state is "locked".
+        Possbility to add questions with AI based on subject and/or class material (upload txt or pdf file, max 5 MB), instructor can choose difficulty (easy, average, hard), number of questions to be generated, type of question to be generated (simple, multiple-choice, open). Use ai_service for that. Can't be done if quiz_state is "locked".
+        New questions cannot be added or removed if quiz_state is "locked".
+    E3 Create subject: Compile and export pdf for students (tab displayed if at least one question is in {user_uuid}/{quiz_uuid}/questions.sqlite)
+        Behviour: if the tab is clicked: {user_uuid}/{quiz_uuid}/amc_session is created if it doesn't exist yes and Preremplies.tex is written to it. amc_latex_service creates the tex file on the basis of the corresponding row of quizes.sqlite and questions.sqlite
+        AI verify subject button: check Preremplies.tex concurrently in 3 different prompts for spelling/grammar, correctness of questions and answers, and latex syntax. Use ai_service for that.
+        Export AMC latex file button: lets user download Preremplies.tex as sujet.tex
+        Export pdf with answers button: amc_compile_service compiles Preremplies.tex using auto-multiple-choice and lets user download reponses.pdf
+        Export pdf for n students button: possibility to specify the number of students and to randomize (or not) order of questions and answer options (read from/written to random_question_order, random_answer_order of quizes.sqlite), placeholder student list {user_uuid}/{quiz_uuid}/list.csv is created and amc_compile_service compiles the document (using Preremplies.tex, the placeholder student list, and the corresponding row of quizes.sqlite), and lets user download sujet.pdf, sets quiz_state in quizes.sqlite to "locked"
+    E4 Evaluate: Grade student copies (tab is displayed if the quiz is in locked state, see quizes.sqlite)
+        Upload pdf with student copies (Max. 500MB) to be put in {user_uuid}/{quiz_uuid}/amc_session/copies.pdf
+        Select CSV student list corresponding to the class (see parameters page), or upload student list (verify if malformed, max 500kB) or leave blanc: replaces the placeholder student list at {user_uuid}/{quiz_uuid}/list.csv
+        Button to analyze student copies analyzes pdf with amc_analyze_service, on the basis of the uploaded pdf, and {user_uuid}/{quiz_uuid}/list.csv
         After analysis: Display boxes detected as unchecked left column (75% page width) and checked (right column). Possibility to manually toggle box images as checked/unchecked. Possibility to view the check box image in the page context. Possbility to select a threshold grayscale value for box being detected as checked.
-        If student list is available and student coded their IDs: Student name association: Display images of handwritten student names from copies together with the autmatically detected ID and the corresponding student name from the student list, possibility to associate the handwritten student name with another student on the list
-        If not: Display images of handwritten student names and AI transcribed names (editable)
-        Display student list with Last name, first name, student id, grade, e-mail address, and button to view corrected student copy
-        Send corrected copies to students by email (if student e-mail is in the student list). Display default email subject and message body (see settings page) using placholders. This should be editable. Send to all and list of students to send e-mails individually (corrected answer sheet is viewable, preview of email, email address and grade)
+        If student list is not left blanc and student coded their IDs (id_coding!=-1): Student name association: Display images of handwritten student names from copies together with the autmatically detected ID and the corresponding student name (first and last) from the student list, possibility to associate the handwritten student name with another student on the list
+        If not: Display images of handwritten student names and AI transcribed names (editable). For this call ai_service for each individual image to get back the transcribed name.
+        Display student list with last name, first name, student id (if column exists), grade, e-mail address (if column exists), and button to view corrected student copy. This list is to be constructed from notes.csv and list.csv.
+        Send corrected copies to students by email (if student e-mail is in the student list). Display default email subject and message body (see settings page) using placholders. This should be editable, globally, not per student. Send to all and list of students to send e-mails individually (corrected answer sheet is viewable, preview of email, email address (should be editable individually) and grade). Use email_service for that (bcc and reply_to should be email col of users postgresql db).
 
 
-Behaviour:
-    - where is data coming from
-    - which page is to be displayed when
-    - locked state of the quiz
+Services:
+
+amc_latex_service: creates amc latex document: input quizes.sqlite and questions.sqlite, output: amc_latex_document
+amc_compile_service: sandbox (danger of latex injection), timeout:
+    get_answer_sheet: input: amc_latex_document, output reponses.pdf
+    get_subject: input: amc_latex_document, output sujet.pdf
+amc_analyze_service input: amc_data; output more amc_data
+ai_service: calls open ai api, gpt5
+    generate_questions_simple: input: subject, course_material, number of questions, difficulty_level; output questions with 4 answer options (one is correct other are plausible but clearly wrong)
+    generate_questions_multiple_choice: input: subject, course_material, number of questions, difficulty_level; output questions with 4 answer options (zero or more are correct other are plausible but clearly wrong)
+    generate_questions_multiple_open: input: subject, course_material, number of questions, difficulty_level; output questions and answers with grading scale (how many percents should be attributed for a particular part of the answer)
+    check_spelling_grammar: input: latex document; output: list of issues
+    check_latex_syntax: input: latex document; output: list of issues
+    check_factuality: input: latex document; output: list of issues
+    image: input: image; output: first_name, last_name
+    transcribe image: input: image; output: first_name, last_name
 
 
+email_service: allows to send emails (input: to, reply_to, bcc, subject, body, attachment, output: success)
+
+
+API enpoints:
+
+
+
+
+Issues: double sided printing, two page on one printing, pages per copy
