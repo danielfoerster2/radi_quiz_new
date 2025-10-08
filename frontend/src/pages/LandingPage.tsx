@@ -52,6 +52,9 @@ export const LandingPage = () => {
         <nav className="landing__nav">
           <span className="landing__logo">Radi Quiz</span>
           <div className="landing__nav-actions">
+            <LinkCTA to="/help" variant="ghost">
+              Aide
+            </LinkCTA>
             <LinkCTA href="/login" variant="ghost">
               Se connecter
             </LinkCTA>
@@ -156,6 +159,9 @@ export const LandingPage = () => {
       <footer className="landing__footer">
         <span>&copy; {new Date().getFullYear()} Radi Quiz. Tous droits réservés.</span>
         <div className="landing__footer-links">
+          <LinkCTA to="/help" variant="ghost">
+            Centre d'aide
+          </LinkCTA>
           <a href="mailto:support@radiquiz.app">Support</a>
           <a href="#features">Fonctionnalités</a>
           <a href="#how-it-works">Processus</a>

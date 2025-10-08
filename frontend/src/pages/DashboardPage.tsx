@@ -205,6 +205,11 @@ export const DashboardPage = () => {
                   Lancer l'analyse des copies
                 </LinkCTA>
               </li>
+              <li>
+                <LinkCTA to="/help" variant="ghost">
+                  Centre d'aide
+                </LinkCTA>
+              </li>
             </ul>
           </section>
 

@@ -1,0 +1,133 @@
+.help {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  padding: clamp(32px, 6vw, 72px);
+}
+
+.help__hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.help__hero h1 {
+  margin: 0 0 10px;
+  font-size: clamp(2rem, 3.4vw, 2.8rem);
+}
+
+.help__hero p {
+  margin: 0;
+  color: #475569;
+  max-width: 520px;
+}
+
+.help__section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.help__section h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 3vw, 2.2rem);
+}
+
+.help__faq {
+  display: grid;
+  gap: 18px;
+}
+
+.help__faq-item {
+  background: #fff;
+  border-radius: 18px;
+  padding: 20px 24px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: 0 22px 50px -45px rgba(15, 23, 42, 0.35);
+}
+
+.help__faq-item h3 {
+  margin: 0 0 10px;
+  font-size: 1.15rem;
+}
+
+.help__faq-item p {
+  margin: 0;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.help__resource-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.help__resource-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 18px 45px -40px rgba(15, 23, 42, 0.35);
+}
+
+.help__resource-card h3 {
+  margin: 0;
+}
+
+.help__resource-card p {
+  margin: 0;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.help__resource-card a {
+  font-weight: 600;
+  color: #2563eb;
+  align-self: flex-start;
+}
+
+.help__section--cta {
+  background: linear-gradient(120deg, rgba(59, 130, 246, 0.12) 0%, rgba(14, 165, 233, 0.12) 100%);
+  padding: clamp(24px, 4vw, 40px);
+  border-radius: 24px;
+}
+
+.help__cta-card {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 20px;
+  padding: clamp(24px, 4vw, 36px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 30px 70px -40px rgba(15, 23, 42, 0.6);
+}
+
+.help__cta-card h2 {
+  margin: 0;
+  font-size: 1.7rem;
+}
+
+.help__cta-card p {
+  margin: 0;
+  color: rgba(226, 232, 240, 0.85);
+  line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  .help {
+    padding: clamp(24px, 6vw, 48px);
+  }
+
+  .help__cta-card {
+    align-items: flex-start;
+  }
+}
