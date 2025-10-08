@@ -186,6 +186,11 @@ export const DashboardPage = () => {
             <h3>Actions rapides</h3>
             <ul className="dashboard__quick-actions">
               <li>
+                <LinkCTA href="/settings" variant="ghost">
+                  Paramètres du compte
+                </LinkCTA>
+              </li>
+              <li>
                 <LinkCTA href="/quizzes" variant="ghost">
                   Voir tous les quiz
                 </LinkCTA>
