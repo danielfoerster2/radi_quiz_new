@@ -96,6 +96,7 @@ def create_app() -> Flask:
     from .routes import (
         account_bp,
         amc_bp,
+        analysis_bp,
         auth_bp,
         classes_bp,
         questions_bp,
@@ -108,6 +109,7 @@ def create_app() -> Flask:
     app.register_blueprint(quizzes_bp)
     app.register_blueprint(questions_bp)
     app.register_blueprint(amc_bp)
+    app.register_blueprint(analysis_bp)
 
     return app
 
