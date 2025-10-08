@@ -93,10 +93,11 @@ def create_app() -> Flask:
                 LOGGER.warning("Workspace missing for user %s; provisioning.", session["user_uuid"])
                 provision_user_workspace(storage_root, session["user_uuid"])
 
-    from .routes import auth_bp, account_bp
+    from .routes import auth_bp, account_bp, classes_bp
 
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(account_bp)
+    app.register_blueprint(classes_bp)
 
     return app
 
