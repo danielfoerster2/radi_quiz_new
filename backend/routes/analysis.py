@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from flask import Blueprint, current_app, g, jsonify, request, send_file
 
 from ..services import amc_compile_service, scan_service
+from ..services.ai_service import extract_student_name
 from ..utils import current_timestamp, to_isoformat
 from ..workspace import ensure_quiz_workspace, provision_user_workspace
 
@@ -521,6 +522,63 @@ def update_associations(quiz_uuid: str):
             capture_conn.commit()
 
     return get_associations(quiz_uuid)
+
+
+@analysis_bp.route(
+    "/quizzes/<quiz_uuid>/analysis/associations/transcribe_names", methods=["POST"]
+)
+@_require_auth
+def transcribe_names(quiz_uuid: str):
+    quiz, error = _ensure_quiz(quiz_uuid)
+    if error:
+        return error
+
+    data = request.get_json(silent=True) or {}
+    students_input = data.get("students")
+    if not isinstance(students_input, list) or not students_input:
+        return _json_error("students must be a non-empty list.", status=400)
+
+    session_dir = _session_dir(quiz_uuid)
+    language = quiz.get("quiz_language") or "fr"
+
+    normalized_ids: List[str] = []
+    for entry in students_input:
+        student_id = str(entry).strip()
+        if not student_id:
+            return _json_error("Student identifiers must be non-empty.", status=400)
+        image_path = session_dir / "cr" / f"name-{student_id}.jpg"
+        if not image_path.exists():
+            return _json_error(
+                f"Handwriting image not found for student {student_id}.", status=404
+            )
+        normalized_ids.append(student_id)
+
+    results: List[Dict[str, Any]] = []
+    for student_id in normalized_ids:
+        image_path = session_dir / "cr" / f"name-{student_id}.jpg"
+        try:
+            ai_response = extract_student_name(str(image_path), language=language)
+        except Exception as exc:  # pragma: no cover - external dependency
+            return _json_error(f"Transcription failed: {exc}", status=502)
+
+        try:
+            parsed = json.loads(ai_response)
+        except json.JSONDecodeError:
+            parsed = {}
+
+        prenom = (parsed.get("prenom") or "").strip()
+        nom = (parsed.get("nom") or "").strip()
+
+        results.append(
+            {
+                "student": student_id,
+                "prenom": prenom,
+                "nom": nom,
+                "raw": ai_response,
+            }
+        )
+
+    return _json_success({"results": results})
 
 
 @analysis_bp.route("/quizzes/<quiz_uuid>/analysis/recalculate", methods=["POST"])

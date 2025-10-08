@@ -244,6 +244,7 @@ This page uses tabs to manage quizzes.
 - `GET /quizzes/{quiz_uuid}/analysis/page-images/{student}/{page}` – Serve page imagery for checkbox review.
 - `GET /quizzes/{quiz_uuid}/analysis/associations` – Fetch handwriting matches and auto/manual associations.
 - `PATCH /quizzes/{quiz_uuid}/analysis/associations` – Update manual student associations.
+- `POST /quizzes/{quiz_uuid}/analysis/associations/transcribe_names` – Transcribe handwriting crops into `{ "prenom": "...", "nom": "..." }`
 - `POST /quizzes/{quiz_uuid}/analysis/recalculate` – Re-run grading, exports, and annotations after edits.
 - `GET /quizzes/{quiz_uuid}/analysis/notes` – Return aggregated grade data for UI display.
 - `GET /quizzes/{quiz_uuid}/analysis/corrections.zip` – Download the ZIP of annotated corrections.
@@ -254,15 +255,6 @@ This page uses tabs to manage quizzes.
 - `POST /quizzes/{quiz_uuid}/emails/preview` – Generate per-student email previews with grades and attachments.
 - `POST /quizzes/{quiz_uuid}/emails/send` – Dispatch correction emails sequentially with progress reporting.
 - `POST /support/requests` – Submit instructor support tickets routed to the support channel.
-
-### AI Tooling
-- `POST /ai/questions` – General endpoint for topic/difficulty-driven question generation jobs.
-- `POST /ai/latex/review` – Run grammar, factual, and LaTeX syntax checks on a provided `sujet.tex` payload.
-- `POST /ai/handwriting/transcribe` – Transcribe handwriting crops into `{ "prenom": "...", "nom": "..." }` records with confidence scores.
-
-### Utilities
-- `GET /health` – Basic service health probe for deployment and monitoring.
-- `GET /metrics` – Expose operational metrics (latency, token usage, queue depth) for observability.
 
 ## Development
 
