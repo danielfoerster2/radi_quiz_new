@@ -17,11 +17,6 @@ type QuizResponse = {
   };
 };
 
-type LockResponse = {
-  quiz: QuizResponse["quiz"];
-  message?: string;
-};
-
 type AIReview = {
   grammar?: string;
   facts?: string;
@@ -180,16 +175,15 @@ export const QuizCompilationPage = () => {
     setError(null);
     try {
       await persistCompileOptions();
-      const response = await apiFetch(`/quizzes/${quizId}/amc/compile`, {
+      await apiFetch(`/quizzes/${quizId}/amc/compile`, {
         method: "POST",
       });
       appendEvent("Compilation AMC terminée.");
       setStatus("Compilation réussie. Les exports sont prêts.");
-      // Optionally refresh quiz state (locked?)
-      const lockResponse = await apiFetch<LockResponse>(`/quizzes/${quizId}`, {
+      const updatedQuiz = await apiFetch<QuizResponse>(`/quizzes/${quizId}`, {
         method: "GET",
       });
-      setQuiz(lockResponse.quiz);
+      setQuiz(updatedQuiz.quiz);
     } catch (err) {
       setError(err instanceof Error ? err.message : "La compilation a échoué.");
     } finally {
