@@ -115,7 +115,7 @@ This page uses tabs to manage quizzes.
 
 ### AI Service (`ai_service`)
 
-- **Purpose:** Centralize all GPT-5 interactions used for quiz generation, LaTeX QA, and handwriting transcription so the frontend and backend call a single facade.
+- **Purpose:** Centralize all GPT-5 (with reasoning={ "effort": "low" }) interactions used for quiz generation, LaTeX QA, and handwriting transcription so the frontend and backend call a single facade.
 - **Question generation:** Accepts prompt context (topic description or uploaded material digest), desired language, difficulty, question type, and quantity. Returns structured question/answer payloads; before persisting, the service shuffles answer ordering and tags the correct options to avoid positional bias.
 - **Quality checks:** Exposes dedicated prompts that review `sujet.tex` for spelling/grammar, LaTeX syntax regressions, and factual inconsistencies. Responses are normalized into issue lists that map back to question numbers for UI display.
 - **Handwriting OCR:** Provides `extract_student_name` and related endpoints that take handwriting crops from the AMC pipeline and respond with `{ "prenom": "...", "nom": "..." }`. The service captures confidence metadata and surfaces low-confidence cases for manual review.
@@ -263,3 +263,7 @@ This page uses tabs to manage quizzes.
 ### Utilities
 - `GET /health` – Basic service health probe for deployment and monitoring.
 - `GET /metrics` – Expose operational metrics (latency, token usage, queue depth) for observability.
+
+## Development
+
+- The directory `dev_documents` contains an example amc_session folder with all files after corrections, inlcluding the sqlite databases created by amc. It also contains code (not functional, needs to be adapted) for some of the mentioned services.

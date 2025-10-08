@@ -263,3 +263,7 @@ This page uses tabs to manage quizzes.
 ### Utilities
 - `GET /health` – Basic service health probe for deployment and monitoring.
 - `GET /metrics` – Expose operational metrics (latency, token usage, queue depth) for observability.
+
+## Development
+
+- The directory `dev_documents` contains an example amc_session folder (and subdirectories) with all files after corrections, inlcluding the sqlite databases created by amc. It also contains code (not functional, needs to be adapted) for some of the mentioned services.

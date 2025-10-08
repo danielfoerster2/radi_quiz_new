@@ -1,0 +1,194 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{float}
+\usepackage{csvsimple}
+\usepackage[francais,ordre,noshufflegroups,bloc]{automultiplechoice}
+\usepackage{afterpage}
+\DeclareUnicodeCharacter{2660}{\ensuremath{\spadesuit}}
+\DeclareUnicodeCharacter{2663}{\ensuremath{\clubsuit}}
+\DeclareUnicodeCharacter{2665}{\ensuremath{\heartsuit}}
+\DeclareUnicodeCharacter{2666}{\ensuremath{\diamondsuit}}
+\setlength{\parindent}{0cm}
+\newcommand{\entete}{{\bf Université d'Orléans, UFR ST \hfill 10/10/2025\\ Outils pour la physique}}
+
+\newcommand\blankpage{
+    \null
+    \thispagestyle{empty}
+    \addtocounter{page}{-1}
+    \newpage}
+
+\AMCrandomseed{1515}
+
+\newcommand{\sujet}{
+
+
+\entete
+\vspace{3ex}
+
+
+\exemplaire{1}{
+{\setlength{\parindent}{0pt}\hspace*{\fill}\AMCcodeGridInt{etu}{4}\hspace*{\fill}
+\begin{minipage}[b]{6.5cm}
+$\longleftarrow{}$\hspace{0pt plus 1cm} Codez votre numéro d'étudiant ci-contre
+et inscrivez votre nom et prénom ci-dessous.
+
+\vspace{3ex}
+
+\hfill\champnom{\fbox{
+    \begin{minipage}{.9\linewidth}
+      Nom et prénom :
+
+      \vspace*{.5cm}\dotfill
+
+      \vspace*{.5cm}\dotfill
+      \vspace*{1mm}
+    \end{minipage}
+  }}\hfill\vspace{5ex}\end{minipage}\hspace*{\fill}
+
+}
+
+\vspace*{.5cm}
+\begin{minipage}{.4\linewidth}
+  \centering\large\bf
+{Cours 1 - 3}
+\end{minipage}
+\begin{center}\em
+{Aucun document n'est autorisé.
+L'usage de la calculatrice est interdit.
+Les questions faisant apparaître le symbole ♣ peuvent présenter zéro, une ou plusieurs bonnes réponses. Les autres ont une unique bonne réponse.}
+\end{center}
+\vspace{1ex}
+\section{Les nombres complexes}
+\restituegroupe{cdd392ffdce249fc845033083de78b44}
+\section{Algèbre linéaire}
+\restituegroupe{f539b8279e664accbfdffe7e3bd3317a}
+
+\AMCaddpagesto{4}
+\AMCcleardoublepage
+\AMCassociation{\id}
+}
+}
+
+\begin{document}
+
+\def\AMCformQuestion#1{{\sc Question #1 :}}
+
+\setdefaultgroupmode{fixed}
+
+\element{cdd392ffdce249fc845033083de78b44}{
+\begin{question}{q1}\bareme{b=1}
+Calculer \((1 - 2i)(3 + i)\).
+\begin{reponses}
+  \mauvaise{5 - 5i}
+  \bonne{5 + 5i}
+  \mauvaise{1 - 5i}
+  \mauvaise{-5 - 5i}
+\end{reponses}
+\end{question}
+}
+\element{cdd392ffdce249fc845033083de78b44}{
+\begin{question}{q2}\bareme{b=1}
+Pour \(z = -1 + i\sqrt{3}\), déterminer \(|z|\) et un argument principal de \(z\).
+\begin{reponses}
+  \bonne{\(|z| = 2\) et \(\arg(z) = \tfrac{2\pi}{3}\)}
+  \mauvaise{\(|z| = 2\) et \(\arg(z) = \tfrac{\pi}{3}\)}
+  \mauvaise{\(|z| = 2\) et \(\arg(z) = -\tfrac{\pi}{3}\)}
+  \mauvaise{\(|z| = \sqrt{2}\) et \(\arg(z) = \tfrac{3\pi}{4}\)}
+\end{reponses}
+\end{question}
+}
+\element{cdd392ffdce249fc845033083de78b44}{
+\begin{question}{q3}\bareme{b=1}
+Résoudre dans \(\mathbb{C}\) : \(z^2 + 4z + 13 = 0\).
+\begin{reponses}
+  \bonne{\(z = -2 \pm 3i\)}
+  \mauvaise{\(z = 2 \pm 3i\)}
+  \mauvaise{\(z = -4 \pm \sqrt{13}\)}
+  \mauvaise{\(z = -2 \pm \sqrt{13}\)}
+\end{reponses}
+\end{question}
+}
+\element{cdd392ffdce249fc845033083de78b44}{
+\begin{question}{q4}\bareme{b=1}
+Soit \(z = 4\left(\cos\tfrac{\pi}{6} + i\sin\tfrac{\pi}{6}\right)\). Écrire \(z\) sous forme algébrique \(a + ib\).
+\begin{reponses}
+  \bonne{2\textbackslash{}sqrt\{3\} + 2i}
+  \mauvaise{\textbackslash{}sqrt\{3\} + 4i}
+  \mauvaise{2 + 2\textbackslash{}sqrt\{3\}i}
+  \mauvaise{4\textbackslash{}sqrt\{3\} + i}
+\end{reponses}
+\end{question}
+}
+\element{cdd392ffdce249fc845033083de78b44}{
+\begin{question}{q5}\bareme{b=4.75}
+Soit \(f: \mathbb{C} \to \mathbb{C}\), \(f(z) = (1+i)z\). Quelle est l'interprétation géométrique de \(f\) ?
+\begin{reponses}
+  \bonne{Une similitude directe de centre 0, de rapport \(\sqrt{2}\) et d'angle \(\tfrac{\pi}{4}\)}
+  \mauvaise{Une translation de vecteur \(1+i\)}
+  \mauvaise{Une symétrie par rapport à l'axe réel}
+  \mauvaise{Une rotation d'angle \(-\tfrac{\pi}{4}\) sans changement d'échelle}
+\end{reponses}
+\end{question}
+}
+\element{f539b8279e664accbfdffe7e3bd3317a}{
+\begin{question}{q6}\bareme{b=1}
+Soit une application linéaire $f: \mathbb{R}^4 \to \mathbb{R}^3$ de rang 2. Quelle est la dimension de son noyau $\ker f$ ?
+\begin{reponseshoriz}
+  \mauvaise{0}
+  \mauvaise{1}
+  \bonne{2}
+  \mauvaise{3}
+\end{reponseshoriz}
+\end{question}
+}
+\element{f539b8279e664accbfdffe7e3bd3317a}{
+\begin{question}{q7}\bareme{b=1}
+Soit $A\in M_{3}(\mathbb{R})$ de rang 2 (donc $\det(A)=0$). À propos du système $A\mathbf{x}=\mathbf{b}$, laquelle des affirmations suivantes est vraie ?
+\begin{reponses}
+  \bonne{Selon $\mathbf{b}$, il y a soit aucune solution, soit une infinité de solutions; il n'y a jamais de solution unique.}
+  \mauvaise{Il y a toujours une unique solution pour tout $\mathbf{b}$.}
+  \mauvaise{Il y a toujours une infinité de solutions pour tout $\mathbf{b}$.}
+  \mauvaise{Il n'y a jamais de solution, quel que soit $\mathbf{b}$.}
+\end{reponses}
+\end{question}
+}
+\element{f539b8279e664accbfdffe7e3bd3317a}{
+\begin{question}{q8}\bareme{b=1}
+Dans $\mathbb{R}^3$, considérons $v_1=(1,0,1)$, $v_2=(2,1,3)$ et $v_3=(1,-1,0)$. Que peut-on dire de la famille $(v_1,v_2,v_3)$ ?
+\begin{reponses}
+  \mauvaise{Elle est libre et forme une base de $\mathbb{R}^3$.}
+  \bonne{Elle est liée et de rang 2.}
+  \mauvaise{Elle est liée et de rang 1.}
+  \mauvaise{Elle ne génère aucun sous-espace de $\mathbb{R}^3$.}
+\end{reponses}
+\end{question}
+}
+\element{f539b8279e664accbfdffe7e3bd3317a}{
+\begin{question}{q9}\bareme{b=1}
+Soit $A=\begin{pmatrix}2 & 1 & 0\\ 0 & 3 & 4\\ 0 & 0 & -1\end{pmatrix}$. Quelles sont ses valeurs propres ?
+\begin{reponses}
+  \bonne{$2,\ 3,\ -1$}
+  \mauvaise{$2,\ -3,\ 1$}
+  \mauvaise{$2,\ 3,\ 1$}
+  \mauvaise{$-2,\ -3,\ 1$}
+\end{reponses}
+\end{question}
+}
+\element{f539b8279e664accbfdffe7e3bd3317a}{
+\begin{question}{q10}\bareme{b=1}
+On effectue sur une matrice $A$ l'opération élémentaire sur les lignes $L_2 \leftarrow L_2 + 2L_1$. Quel est l'effet sur $\det(A)$ ?
+\begin{reponses}
+  \mauvaise{Le déterminant est multiplié par 2.}
+  \mauvaise{Le déterminant change de signe.}
+  \bonne{Le déterminant est inchangé.}
+  \mauvaise{Le déterminant devient nul.}
+\end{reponses}
+\end{question}
+}
+
+\csvreader[head to column names]{liste.csv}{}{\sujet}
+\end{document}
