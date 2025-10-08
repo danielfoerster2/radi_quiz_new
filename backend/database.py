@@ -80,6 +80,9 @@ def initialize_schema() -> None:
                 one_time_pwd TEXT,
                 one_time_pwd_expires_at TEXT,
                 verification_code TEXT,
+                pending_email TEXT,
+                pending_email_code TEXT,
+                pending_email_requested_at TEXT,
                 google_sub TEXT,
                 last_active TEXT,
                 workspace_is_encrypted INTEGER DEFAULT 0,
@@ -104,6 +107,24 @@ def initialize_schema() -> None:
         )
         cursor.close()
         connection.commit()
+        _ensure_user_columns(connection)
+
+
+def _ensure_user_columns(connection: sqlite3.Connection) -> None:
+    columns = {
+        "pending_email": "TEXT",
+        "pending_email_code": "TEXT",
+        "pending_email_requested_at": "TEXT",
+    }
+    existing = {
+        row["name"] for row in connection.execute("PRAGMA table_info(users)")
+    }
+    for column, definition in columns.items():
+        if column not in existing:
+            connection.execute(
+                f"ALTER TABLE users ADD COLUMN {column} {definition}"
+            )
+    connection.commit()
 
 
 __all__ = ["init_app", "get_connection", "transaction"]

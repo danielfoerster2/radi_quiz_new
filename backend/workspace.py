@@ -129,6 +129,7 @@ def is_workspace_encrypted(workspace: Path) -> bool:
 
 
 __all__ = [
+    "DEFAULT_STUDENT_INSTRUCTIONS",
     "provision_user_workspace",
     "mark_workspace_encrypted",
     "mark_workspace_decrypted",
