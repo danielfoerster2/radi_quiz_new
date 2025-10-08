@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiFetch } from "../services/api";
 import { LinkCTA } from "../components/LinkCTA";
+import { QuizTabs } from "../components/QuizTabs";
 import "./QuizGeneralitiesPage.css";
 
 type QuizPayload = {
@@ -203,13 +204,7 @@ export const QuizGeneralitiesPage = () => {
         </div>
       </header>
 
-      <nav className="quiz-generalities__tabs" aria-label="Navigation des sections du quiz">
-        <span className="quiz-generalities__tab quiz-generalities__tab--active">Généralités</span>
-        <span className="quiz-generalities__tab">Questions</span>
-        <span className="quiz-generalities__tab">Compilation</span>
-        <span className="quiz-generalities__tab">Analyse</span>
-        <span className="quiz-generalities__tab">Emails</span>
-      </nav>
+      <QuizTabs active="" />
 
       {status && <div className="quiz-generalities__notice quiz-generalities__notice--success">{status}</div>}
       {error && <div className="quiz-generalities__notice quiz-generalities__notice--error">{error}</div>}

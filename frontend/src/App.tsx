@@ -4,6 +4,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { HelpPage } from "./pages/HelpPage";
 import { QuizGeneralitiesPage } from "./pages/QuizGeneralitiesPage";
+import { QuizQuestionsPage } from "./pages/QuizQuestionsPage";
 
 const App = () => {
   return (
@@ -14,6 +15,7 @@ const App = () => {
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/help" element={<HelpPage />} />
         <Route path="/quizzes/:quizId" element={<QuizGeneralitiesPage />} />
+        <Route path="/quizzes/:quizId/questions" element={<QuizQuestionsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

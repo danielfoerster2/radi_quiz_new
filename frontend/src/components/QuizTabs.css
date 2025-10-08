@@ -1,0 +1,21 @@
+.quiz-tabs {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+  padding-bottom: 12px;
+}
+
+.quiz-tabs__item {
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.quiz-tabs__item--active {
+  background: #0f172a;
+  color: #f8fafc;
+}
