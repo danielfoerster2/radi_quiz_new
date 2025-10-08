@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { apiFetch } from "../services/api";
 import { LinkCTA } from "../components/LinkCTA";
 import "./DashboardPage.css";
@@ -159,9 +160,9 @@ export const DashboardPage = () => {
                 {quizzes.map((quiz) => (
                   <tr key={quiz.quiz_uuid}>
                     <td>
-                      <a className="dashboard__table-link" href={`/quizzes/${quiz.quiz_uuid}`}>
+                      <Link className="dashboard__table-link" to={`/quizzes/${quiz.quiz_uuid}`}>
                         {quiz.quiz_title || "Sans titre"}
-                      </a>
+                      </Link>
                     </td>
                     <td>
                       <span
