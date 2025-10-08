@@ -7,6 +7,7 @@ import { QuizGeneralitiesPage } from "./pages/QuizGeneralitiesPage";
 import { QuizQuestionsPage } from "./pages/QuizQuestionsPage";
 import { QuizCompilationPage } from "./pages/QuizCompilationPage";
 import { QuizAnalysisPage } from "./pages/QuizAnalysisPage";
+import { QuizEmailsPage } from "./pages/QuizEmailsPage";
 
 const App = () => {
   return (
@@ -20,6 +21,7 @@ const App = () => {
         <Route path="/quizzes/:quizId/compile" element={<QuizCompilationPage />} />
         <Route path="/quizzes/:quizId/questions" element={<QuizQuestionsPage />} />
         <Route path="/quizzes/:quizId/analysis" element={<QuizAnalysisPage />} />
+        <Route path="/quizzes/:quizId/emails" element={<QuizEmailsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
