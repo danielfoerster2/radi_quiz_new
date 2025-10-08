@@ -7,6 +7,7 @@ from .quizzes import quizzes_bp
 from .questions import questions_bp
 from .amc import amc_bp
 from .analysis import analysis_bp
+from .emails import emails_bp
 
 __all__ = [
     "auth_bp",
@@ -16,4 +17,5 @@ __all__ = [
     "questions_bp",
     "amc_bp",
     "analysis_bp",
+    "emails_bp",
 ]

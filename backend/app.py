@@ -33,6 +33,7 @@ def create_app() -> Flask:
     app.config["ENVIRONMENT"] = config.environment
     app.config["GOOGLE_CLIENT_ID"] = os.getenv("GOOGLE_CLIENT_ID")
     app.config["GOOGLE_CLIENT_SECRET"] = os.getenv("GOOGLE_CLIENT_SECRET")
+    app.config["SUPPORT_EMAIL"] = os.getenv("SUPPORT_EMAIL")
 
     init_database(app)
 
@@ -99,6 +100,7 @@ def create_app() -> Flask:
         analysis_bp,
         auth_bp,
         classes_bp,
+        emails_bp,
         questions_bp,
         quizzes_bp,
     )
@@ -110,6 +112,7 @@ def create_app() -> Flask:
     app.register_blueprint(questions_bp)
     app.register_blueprint(amc_bp)
     app.register_blueprint(analysis_bp)
+    app.register_blueprint(emails_bp)
 
     return app
 
