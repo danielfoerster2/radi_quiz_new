@@ -5,7 +5,7 @@ This application is a graphical web interface for the LaTeX Auto Multiple Choice
 ## Technology Stack
 
 - **Backend:** Python/Flask integrated with Auto Multiple Choice.
-- **Frontend:** TypeScript single-page application.
+- **Frontend:** TypeScript single-page application: React + TypeScript built with Vite.
 - **Persistence:** PostgreSQL for instructor accounts, plus per-user SQLite databases and file storage.
 
 ### PostgreSQL `users` table
@@ -23,16 +23,17 @@ The `users` table stores instructor authentication and verification data with th
 
 ## Directory Structure
 
-Each instructor (`user_uuid`) owns a directory populated with defaults on account creation:
+Each instructor (`user_uuid`) owns a directory populated:
 
-- `user_defaults.sqlite`: columns `first_name`, `last_name`, `institution_name`, `student_instructions`, `coding_explanation`, `email_subject`, `email_body`, `default_quiz_language` (e.g., `fr`, `en`).
+- `user_defaults.sqlite`: columns `first_name`, `last_name`, `institution_name`, `student_instructions`, `coding_explanation`, `email_subject`, `email_body`, `quiz_language`.
 - `classes.sqlite`: columns `class_title`, `student_list`.
 - `quizes.sqlite`: columns `quiz_uuid`, `quiz_title`, `creation_date`, `quiz_state`, `id_coding`, `number_of_questions`, `institution_name`, `student_instructions`, `coding_explanation`, `email_subject`, `email_body`, `class_title`, `date_of_quiz`, `duration`, `quiz_language`, `random_question_order`, `random_answer_order`.
 - `{list_uuid}.csv`: one CSV per student list.
 - `{quiz_uuid}/`: quiz-specific directory containing:
-  - `questions.sqlite`: columns `question_text`, `question_type`, `subject_title`, `subject_uuid`, `answer_option1` ... `answer_option10`, `correct_answer`, `points`, `question_number`, `illustration_filename`, `illustration_width`.
+  - `questions.sqlite`: columns `question_uuid`, `question_text`, `question_type`, `subject_title`, `subject_uuid`, `points`, `question_number`, `illustration_filename`, `illustration_width`.
+  - `answers.sqlite`: columns `question_uuid`, `answer_option`, `correct`.
   - `list.csv`: student list.
-  - `illustrations/`: image assets stored as `<md5>.png` or `<md5>.jpg`/`.jpeg`.
+  - `illustrations/`: image assets stored as `<md5>.png` or `<md5>.jpg`.
   - `amc_session/`: workspace used while compiling AMC documents.
 
 ## Frontend Application
@@ -44,14 +45,14 @@ Each instructor (`user_uuid`) owns a directory populated with defaults on accoun
   - **Create account (email/password):** Collect email and a password entered twice (8–30 characters; at least one uppercase letter, lowercase letter, digit, and special character). If the email is new or the existing record has `verification_code != "-1"`, create a row in `users` with generated `user_uuid`, salt, salted hash, and verification code. Send the verification code by email. After the user confirms the code, set `verification_code` to `"-1"`, create the `{user_uuid}` directory with prefilled `user_defaults.sqlite`, empty `classes.sqlite`, and empty `quizes.sqlite`, then sign the user in. If an account already exists with `verification_code == "-1"`, show an “account already exists” error.
   - **Create account (Google Sign-In):** If the email exists in `users`, proceed directly to login. Otherwise create a new record with generated `user_uuid`, set `verification_code` to `"-1"`, and create the `{user_uuid}` directory as above.
 - **Login (email/password):** Compute the salted password hash and compare it with `salted_password_hash`. If it does not match, compare the entered password with `one_time_pwd` and confirm that the current time is earlier than `one_time_pwd_expires_at`. When the one-time password is valid, prompt the user to set a new password (same complexity rules), generate a new salt and hash, save both, and set `one_time_pwd_expires_at` to the current time. On successful login, set `last_active` to the current timestamp. If neither credential path succeeds, display an error.
-  - **Login attempt with password on a Google-only account:** Detect the absence of password credentials (missing salt/hash) and instruct the user to sign in with Google or trigger the password reset flow to establish credentials.
+  - **Login attempt with password on a Google-only account:** Detect the absence of password credentials (missing hash) and instruct the user to sign in with Google or trigger the password reset flow to establish credentials.
 - **Login (Google Sign-In):** Authenticate with Google and log the user in when successful, updating `last_active` at the end of the flow.
 - **Forgot password:** Generate a one-time password (OTP), send it by email, write it to `one_time_pwd`, and set `one_time_pwd_expires_at` to 15 minutes in the future.
 - **Session activity:** Each authenticated API request updates `last_active`. When a user’s `last_active` is more than 30 minutes old, expire the session and require re-authentication. While inactive, encrypt the on-disk `{user_uuid}` directory using a service key; decrypt it only after successful login.
 
 ### B. Dashboard Page
 
-- **B1:** “Create new quiz” button generates a new `quiz_uuid`, creates `{user_uuid}/{quiz_uuid}`, and inserts a row into `quizes.sqlite` with `quiz_uuid`, the current time as `creation_date`, `quiz_state = "unlocked"`, `id_coding = "8"`, `number_of_questions = "0"`, `quiz_language` (defaulting to `default_quiz_language`), and `institution_name`, `student_instructions`, `coding_explanation`, `email_subject`, `email_body` copied from `user_defaults.sqlite`. The UI then navigates to section E1.
+- **B1:** “Create new quiz” button generates a new `quiz_uuid`, creates `{user_uuid}/{quiz_uuid}`, and inserts a row into `quizes.sqlite` with `quiz_uuid`, the current time as `creation_date`, `quiz_state = "unlocked"`, `id_coding = "8"`, `number_of_questions = "0"`, `quiz_language`, and `institution_name`, `student_instructions`, `coding_explanation`, `email_subject`, `email_body` copied from `user_defaults.sqlite`. The UI then navigates to section E1.
 - **B2:** List available quizzes with columns `quiz_title`, `number_of_questions`, `creation_date`, `quiz_state`, and actions.
   - **Delete:** Ask for explicit confirmation (highlighting that data is unrecoverable), then remove the corresponding row from `quizes.sqlite` and delete `{user_uuid}/{quiz_uuid}`.
   - **Duplicate:** Generate a new `quiz_uuid`, copy the source quiz directory (excluding any `amc_session` subdirectory), and duplicate the database row with the new `quiz_uuid`, `quiz_state = "unlocked"`, and a fresh `creation_date`.
@@ -84,18 +85,19 @@ This page uses tabs to manage quizzes.
   - `date_of_quiz`: calendar selector (French locale).
   - `duration`.
   - `student_instructions`.
-  - `quiz_language`: dropdown with at least French (`fr`) and English (`en`); defaults to `default_quiz_language` and is stored in `quizes.sqlite`.
+  - `quiz_language`: dropdown with at least French (`fr`) and English (`en`).
   - `id_coding`: enable student ID coding by storing the number of digits and the explanation in `coding_explanation`; set `id_coding = -1` when disabled.
-- **E2 Questions:** Available once `quiz_title` is stored. Load and persist data in `questions.sqlite`.
-  - Question attributes include `question_text`, `question_type` (`simple`, `multiple-choice`, or `open`), `subject_title`, `subject_uuid` (generated for new subjects), answer options (`answer_option1` through `answer_option10`), `correct_answer`, `points`, `question_number` (auto-managed as `Q1`, `Q2`, ... and always realigned to the current display order whenever questions or subjects are reordered or deleted), `illustration_filename`, and `illustration_width` (stores the LaTeX width to apply when rendering the illustration).
+- **E2 Questions:** Available once `quiz_title` is stored. Load and persist structural data in `questions.sqlite` and answer rows in `answers.sqlite`.
+  - Question attributes include `question_uuid`, `question_text`, `question_type` (`simple`, `multiple-choice`, or `open`), `subject_title`, `subject_uuid` (generated for new subjects), `points`, `question_number` (auto-managed as `Q1`, `Q2`, ... and always realigned to the current display order whenever questions or subjects are reordered or deleted), `illustration_filename`, and `illustration_width` (stores the LaTeX width to apply when rendering the illustration).
+  - Answer options persist one row per choice in `answers.sqlite` with `question_uuid`, free-form `answer_option` text, and a boolean `correct`. Allow instructors to add, duplicate, remove, and reorder options without enforcing a fixed maximum.
   - All textual fields accept French or English content; downstream exports and services use `quiz_language` to determine locale-specific formatting (e.g., date formats and AI prompts).
-  - When a quiz reaches the locked state, disable every question attribute input except `correct_answer`, `points`, and `question_number`, which remain editable so instructors can adjust scoring and grading feedback.
+  - When a quiz reaches the locked state, disable every question attribute input except `points`, `question_number`, and the ability to toggle which `answers.sqlite` rows are correct, preserving flexibility to adjust scoring while preventing structural edits.
   - Allow uploading `.png`, `.jpg`, or `.jpeg` illustrations up to 5 MB. Store each as `{user_uuid}/{quiz_uuid}/{image_md5_sum}.{png|jpg}` and display a thumbnail.
   - Support reordering questions within subjects and reordering whole subjects; both actions are disabled when `quiz_state` is `"locked"`.
-  - Provide AI-assisted question generation by uploading `.txt` or `.pdf` class material (max 5 MB) and selecting difficulty (easy, average, hard) and question type (simple, multiple-choice, open). Invoke `ai_service` for generation and shuffle each question’s four options after the model response so the correct answer is not always in the first position. Disable when `quiz_state` is `"locked"`.
+  - Provide AI-assisted question generation by uploading `.txt` or `.pdf` class material (max 5 MB) and selecting difficulty (easy, average, hard) and question type (simple, multiple-choice, open). Invoke `ai_service` for generation and shuffle each question’s answer options after the model response so the correct answers are not always in the first positions. Disable when `quiz_state` is `"locked"`.
   - Prevent adding or removing questions once the quiz is locked.
 - **E3 Create subject:** Compile and export quiz materials (available when `questions.sqlite` contains at least one question).
-  - On first entry, create `{user_uuid}/{quiz_uuid}/amc_session` if needed and write `sujet.tex` generated via `amc_latex_service` using `quizes.sqlite` and `questions.sqlite`.
+  - On first entry, create `{user_uuid}/{quiz_uuid}/amc_session` if needed and write `sujet.tex` generated via `amc_latex_service` using `quizes.sqlite`, `questions.sqlite`, and `answers.sqlite`.
   - **AI verify subject:** Run three `ai_service` prompts in parallel to review spelling/grammar, factual correctness, and LaTeX syntax of `sujet.tex`.
   - **Export AMC LaTeX file:** Allow downloading `sujet.tex`.
   - **Export PDF with answers:** Use `amc_compile_service` to build `reponses.pdf`.
@@ -111,25 +113,6 @@ This page uses tabs to manage quizzes.
   - Present a summary table built from `notes.csv` and `list.csv`, including first name, last name, student ID (if available), grade, email address, and a link to the correction PDF from `cr/corrections/pdf/{student_num}.pdf`.
   - Offer a “Recalculer les notes” action beneath “Association des étudiants”. Triggering it re-runs `auto-multiple-choice note`, `export` (ODS and CSV), and `annotate` so grades and annotated PDFs reflect the latest checkbox and LaTeX adjustments.
   - Enable sending corrected copies via email when student addresses exist. For each student, render an email preview with the personalized grade, attachment path (`cr/corrections/pdf/{student_num}.pdf`), editable `Reply-To`/`BCC`, and a confirmation step before dispatch while keeping the global subject/body templates (placeholders supported) editable at the top of the panel. Batch sends call `email_service` in sequence with a 5-second delay between messages and display a progress counter (`sent / total`).
-
-## Services
-
-- `amc_latex_service`: Creates AMC LaTeX documents using `quizes.sqlite` and `questions.sqlite` data; outputs an `amc_latex_document`.
-- `amc_compile_service`: Runs within a sandbox (mitigating LaTeX injection) with defined timeouts.
-  - `get_answer_sheet`: input `amc_latex_document`, output `reponses.pdf`.
-  - `get_subject`: input `amc_latex_document`, output `sujet.pdf`.
-- `amc_analyze_service`: Accepts AMC data and returns enriched AMC data after analysis.
-- `ai_service`: Proxies OpenAI GPT-5 capabilities.
-  - `generate_questions_simple`: input subject, course material, question count, difficulty, language; output questions with four answer options (first returned option marked correct, then the service shuffles the four choices before persisting).
-  - `generate_questions_multiple_choice`: same inputs (including language); output questions with four options where zero or more answers may be correct, again shuffling the four returned choices so the correct answers are not consistently positioned.
-  - `generate_questions_multiple_open`: same inputs (including language); output open questions with graded answer keys defining percentage breakdowns.
-  - `check_spelling_grammar`: input LaTeX document; output list of issues.
-  - `check_latex_syntax`: input LaTeX document; output list of issues.
-  - `check_factuality`: input LaTeX document; output list of potential factual errors.
-  - `image`: input image; output `first_name`, `last_name`.
-  - `transcribe_image`: input image; output `first_name`, `last_name` (AI transcription).
-  - `extract_student_name`: input handwriting crop filename; output `{ "prenom": "...", "nom": "..." }` generated via `client.responses.create(model="gpt-5", reasoning={"effort": "low"})`.
-- `email_service`: Sends emails (`to`, `reply_to`, `bcc`, `subject`, `body`, `attachment`) and returns success status.
 
 ## API Endpoints
 
@@ -176,11 +159,11 @@ This page uses tabs to manage quizzes.
 
 ### Questions & Subjects
 
-- `GET /api/quizzes/{quiz_uuid}/questions` — List questions grouped by subject.
-- `POST /api/quizzes/{quiz_uuid}/questions` — Add a new question.
-- `GET /api/quizzes/{quiz_uuid}/questions/{question_uuid}` — Retrieve a question.
-- `PUT /api/quizzes/{quiz_uuid}/questions/{question_uuid}` — Update question fields (respecting lock state).
-- `DELETE /api/quizzes/{quiz_uuid}/questions/{question_uuid}` — Remove a question (when unlocked).
+- `GET /api/quizzes/{quiz_uuid}/questions` — List questions grouped by subject, expanding each question’s answers from `answers.sqlite`.
+- `POST /api/quizzes/{quiz_uuid}/questions` — Add a new question and persist its answer array into `answers.sqlite`.
+- `GET /api/quizzes/{quiz_uuid}/questions/{question_uuid}` — Retrieve a question with its associated answers.
+- `PUT /api/quizzes/{quiz_uuid}/questions/{question_uuid}` — Update question fields and synchronize answer rows (respecting lock state).
+- `DELETE /api/quizzes/{quiz_uuid}/questions/{question_uuid}` — Remove a question and cascade-delete its answers (when unlocked).
 - `POST /api/quizzes/{quiz_uuid}/questions/reorder` — Persist question order per subject and subject order.
 - `POST /api/quizzes/{quiz_uuid}/subjects` — Create or rename a subject (`subject_uuid`).
 - `DELETE /api/quizzes/{quiz_uuid}/subjects/{subject_uuid}` — Remove an empty subject.
@@ -199,14 +182,44 @@ This page uses tabs to manage quizzes.
 - `POST /api/quizzes/{quiz_uuid}/subject/answers` — Generate `reponses.pdf` via `amc_compile_service`.
 - `POST /api/quizzes/{quiz_uuid}/subject/export` — Compile `sujet.pdf` for N students with optional randomization.
 
+### Evaluation Pipeline
+
+- `POST /api/quizzes/{quiz_uuid}/copies` — Upload `copies.pdf` for analysis.
+- `POST /api/quizzes/{quiz_uuid}/analysis` — Trigger `amc_analyze_service` on the uploaded copies.
+- `GET /api/quizzes/{quiz_uuid}/analysis` — Retrieve analysis results, checkbox data, and thresholds.
+- `PUT /api/quizzes/{quiz_uuid}/analysis/checkboxes` — Persist manual box toggles and threshold changes.
+- `PUT /api/quizzes/{quiz_uuid}/analysis/names` — Update name associations or AI transcriptions.
+- `GET /api/quizzes/{quiz_uuid}/grades` — Fetch the combined student/grade list (from `notes.csv` and `list.csv`).
+- `POST /api/quizzes/{quiz_uuid}/grades/recalculate` — Rerun AMC `note`, `export` (ODS/CSV), and `annotate` to refresh grades and corrected PDFs.
+- `POST /api/quizzes/{quiz_uuid}/emails/send` — Send corrected copies to all or selected students via `email_service`.
+
+## Services
+
+- `amc_latex_service`: Creates AMC LaTeX documents using `quizes.sqlite`, `questions.sqlite`, and `answers.sqlite` data; outputs an `amc_latex_document`.
+- `amc_compile_service`: Runs within a sandbox (mitigating LaTeX injection) with defined timeouts.
+  - `get_answer_sheet`: input `amc_latex_document`, output `reponses.pdf`.
+  - `get_subject`: input `amc_latex_document`, output `sujet.pdf`.
+- `amc_analyze_service`: Accepts AMC data and returns enriched AMC data after analysis.
+- `ai_service`: Proxies OpenAI GPT-5 capabilities.
+  - `generate_questions_simple`: input subject, course material, question count, difficulty, language; output questions with answer options (the model marks which are correct, then the service shuffles the returned choices before persisting to `answers.sqlite`).
+  - `generate_questions_multiple_choice`: same inputs (including language); output questions with any number of options where zero or more answers may be correct, again shuffling the returned choices so correctness is not tied to ordering.
+  - `generate_questions_multiple_open`: same inputs (including language); output open questions with graded answer keys defining percentage breakdowns.
+  - `check_spelling_grammar`: input LaTeX document; output list of issues.
+  - `check_latex_syntax`: input LaTeX document; output list of issues.
+  - `check_factuality`: input LaTeX document; output list of potential factual errors.
+  - `image`: input image; output `first_name`, `last_name`.
+  - `transcribe_image`: input image; output `first_name`, `last_name` (AI transcription).
+  - `extract_student_name`: input handwriting crop filename; output `{ "prenom": "...", "nom": "..." }` generated via `client.responses.create(model="gpt-5", reasoning={"effort": "low"})`.
+- `email_service`: Sends emails (`to`, `reply_to`, `bcc`, `subject`, `body`, `attachment`) and returns success status.
+
 ### AMC LaTeX Service (`amc_latex_service`)
 
 - **Purpose:** Convert quiz metadata into an Auto Multiple Choice–compatible `sujet.tex` that can be compiled or further processed by `amc_compile_service`.
-- **Inputs:** Reads quiz-level fields from `quizes.sqlite` (e.g., `quiz_title`, `institution_name`, `student_instructions`, `quiz_language`, `date_of_quiz`, `duration`, `random_question_order`, `random_answer_order`, `number_of_questions`, `id_coding`) and per-question data from `{quiz_uuid}/questions.sqlite` (`question_text`, `question_type`, `subject_title`, `subject_uuid`, `answer_option1`…`answer_option10`, `correct_answer`, `points`, `question_number`, `illustration_filename`, `illustration_width`).
+- **Inputs:** Reads quiz-level fields from `quizes.sqlite` (e.g., `quiz_title`, `institution_name`, `student_instructions`, `quiz_language`, `date_of_quiz`, `duration`, `random_question_order`, `random_answer_order`, `number_of_questions`, `id_coding`), per-question data from `{quiz_uuid}/questions.sqlite` (`question_uuid`, `question_text`, `question_type`, `subject_title`, `subject_uuid`, `points`, `question_number`, `illustration_filename`, `illustration_width`), and answer choices from `{quiz_uuid}/answers.sqlite` (`question_uuid`, `answer_option`, `correct`).
 - **Header generation:** Builds document options (`\usepackage[...]{automultiplechoice}`) and AMC flags (`bloc`, `noshufflegroups`, `ordre`) based on quiz randomization preferences. Injects institution, class, and scheduling metadata into macros for the subject header, and wires up the student identification grid when `id_coding`/`number_of_questions` imply coded copies.
 - **Student instructions:** When no custom instructions are stored for the quiz, append the default French block (“Aucun document n'est autorisé.”, “L’usage de la calculatrice est interdit.”, “Les questions faisant apparaître le symbole ♣ peuvent présenter zéro, une ou plusieurs bonnes réponses.”, “Les autres ont une unique bonne réponse.”).
 - **Question rendering:** Groups questions by `subject_uuid`, assigns a deterministic internal AMC group id per subject, and emits `\element{}` blocks in the same order as `question_number` unless quiz-level randomization overrides it. Each question body is escaped with `escape_latex`, which preserves inline/block math segments while sanitizing other LaTeX-sensitive characters.
-- **Answer options:** Selects `question`, `questionmult`, or `open` environments from AMC based on `question_type`. For single/multiple choice, compute `sum(len(option)) + count(option) * 7`; use `\reponseshoriz` when the result is < 47, otherwise fall back to `\reponses`. Label each option as `\bonne` or `\mauvaise` according to `correct_answer`. Open questions use `\AMCOpen` with the requested number of lines.
+- **Answer options:** Selects `question`, `questionmult`, or `open` environments from AMC based on `question_type`. For single/multiple choice, compute `sum(len(option)) + count(option) * 7`; use `\reponseshoriz` when the result is < 47, otherwise fall back to `\reponses`. Label each option as `\bonne` or `\mauvaise` according to the `correct` flag stored alongside each answer in `answers.sqlite`. Open questions use `\AMCOpen` with the requested number of lines.
 - **Figures:** When `illustration_filename` is set, the service inserts a `figure` environment that references the stored asset under `{quiz_uuid}/illustrations/` and scales it with `illustration_width`.
 - **Document footer:** Appends `\AMCassociation{\id}` and a `\csvreader` loop over `list.csv` so AMC generates one subject per student entry. The resulting LaTeX string is written to `{quiz_uuid}/sujet.tex` and optionally cached for subsequent download or compilation calls.
 
@@ -235,19 +248,3 @@ This page uses tabs to manage quizzes.
 - **Association updates:** When an instructor adjusts selections, the service writes the chosen `id` into `association_association.manual` for existing rows or inserts a new row (`student`, `copy = 0`, `manual`, `auto = NULL`) for previously unrecognized students. It also zeroes `timestamp_annotate` and `timestamp_manual` in `capture.sqlite/capture_page` for the affected internal student numbers so future scans and annotations rebuild against the corrected associations.
 - **UI integration (Cases détectées pour vérification):** Supplies the frontend with the checkbox payload that drives the collapsible “Cases détectées pour vérification” panel: two columns (“unchecked” ascending by fill ratio, “checked” descending) rendered inside a dedicated box so borderline cases naturally collect near the bottom of each column, a slider labeled “Seuil taux de noircissement” that re-runs the thresholding on demand, and per-checkbox toggle buttons that move entries between columns while highlighting manual overrides in light yellow. Clicking a checkbox requests its parent page image (`cr/page-{student}-{page}.jpg`) plus polygon coordinates reconstructed from `capture_position` so the UI can draw a bounding box.
 - **Database synchronization:** After the instructor commits manual reclassifications, the service rewrites `capture_zone.manual` for every displayed checkbox (`1` for checked, `0` for unchecked) and stamps `capture_page.timestamp_manual` with the current Unix epoch, ensuring the UI, grading logic, and AMC database stay aligned.
-
-### Evaluation Pipeline
-
-- `POST /api/quizzes/{quiz_uuid}/copies` — Upload `copies.pdf` for analysis.
-- `POST /api/quizzes/{quiz_uuid}/analysis` — Trigger `amc_analyze_service` on the uploaded copies.
-- `GET /api/quizzes/{quiz_uuid}/analysis` — Retrieve analysis results, checkbox data, and thresholds.
-- `PUT /api/quizzes/{quiz_uuid}/analysis/checkboxes` — Persist manual box toggles and threshold changes.
-- `PUT /api/quizzes/{quiz_uuid}/analysis/names` — Update name associations or AI transcriptions.
-- `GET /api/quizzes/{quiz_uuid}/grades` — Fetch the combined student/grade list (from `notes.csv` and `list.csv`).
-- `POST /api/quizzes/{quiz_uuid}/grades/recalculate` — Rerun AMC `note`, `export` (ODS/CSV), and `annotate` to refresh grades and corrected PDFs.
-- `POST /api/quizzes/{quiz_uuid}/emails/send` — Send corrected copies to all or selected students via `email_service`.
-
-
-## Known Issues
-
-- Double-sided printing alignment.
