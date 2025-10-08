@@ -26,6 +26,12 @@ type GenericResponse = {
   message: string;
 };
 
+type ExportResponse = {
+  message: string;
+};
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+
 const initialProfile = {
   email: "",
   first_name: "",
@@ -51,6 +57,8 @@ export const SettingsPage = () => {
   const [isUpdatingDefaults, setIsUpdatingDefaults] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isRequestingEmailChange, setIsRequestingEmailChange] = useState(false);
+  const [isExportingData, setIsExportingData] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -180,6 +188,59 @@ export const SettingsPage = () => {
       );
     } finally {
       setIsRequestingEmailChange(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    setIsExportingData(true);
+    setError(null);
+    setStatus(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/me/export`, {
+        method: "GET",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error || "Échec de l'export.");
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "radi-quiz-workspace.zip";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      setStatus("Archive téléchargée.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossible d'exporter vos données.");
+    } finally {
+      setIsExportingData(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (
+      !window.confirm(
+        "Cette action est irréversible. Vos quiz, classes et fichiers AMC seront supprimés. Confirmez-vous la suppression ?",
+      )
+    ) {
+      return;
+    }
+    setIsDeletingAccount(true);
+    setError(null);
+    setStatus(null);
+    try {
+      await apiFetch<GenericResponse>("/me", {
+        method: "DELETE",
+      });
+      window.location.href = "/";
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "La suppression a échoué.");
+    } finally {
+      setIsDeletingAccount(false);
     }
   };
 
@@ -352,6 +413,36 @@ export const SettingsPage = () => {
               {isRequestingEmailChange ? "Envoi en cours…" : "Envoyer le code"}
             </button>
           </form>
+        </section>
+
+        <section className="settings__card">
+          <h2>Exporter mes données</h2>
+          <p className="settings__lead">
+            Téléchargez une archive ZIP contenant vos classes, quiz et fichiers AMC.
+          </p>
+          <button
+            className="settings__button"
+            type="button"
+            onClick={handleExportData}
+            disabled={isExportingData}
+          >
+            {isExportingData ? "Préparation…" : "Télécharger l'archive"}
+          </button>
+        </section>
+
+        <section className="settings__card settings__card--danger">
+          <h2>Supprimer mon compte</h2>
+          <p className="settings__lead">
+            Cette action est définitive. Vos données seront supprimées et vous serez déconnecté.
+          </p>
+          <button
+            className="settings__button settings__button--danger"
+            type="button"
+            onClick={handleDeleteAccount}
+            disabled={isDeletingAccount}
+          >
+            {isDeletingAccount ? "Suppression…" : "Supprimer mon compte"}
+          </button>
         </section>
       </main>
     </div>

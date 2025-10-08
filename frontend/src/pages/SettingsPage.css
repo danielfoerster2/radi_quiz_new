@@ -121,6 +121,15 @@
   box-shadow: 0 16px 36px -26px rgba(37, 99, 235, 0.5);
 }
 
+.settings__card--danger {
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  background: rgba(248, 113, 113, 0.08);
+}
+
+.settings__button--danger {
+  background: rgba(248, 113, 113, 0.9);
+}
+
 .settings__loading {
   display: grid;
   place-items: center;
