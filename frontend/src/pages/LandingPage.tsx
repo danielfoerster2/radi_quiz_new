@@ -55,8 +55,11 @@ export const LandingPage = () => {
             <LinkCTA href="/login" variant="ghost">
               Se connecter
             </LinkCTA>
-            <LinkCTA href="/register" variant="primary">
+            <LinkCTA href="/register" variant="ghost">
               Créer un compte
+            </LinkCTA>
+            <LinkCTA to="/dashboard" variant="primary">
+              Accéder au tableau de bord
             </LinkCTA>
           </div>
         </nav>
