@@ -20,6 +20,15 @@ def _ensure_parent(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
 
 
+def _ensure_columns(conn: sqlite3.Connection, table: str, columns: dict[str, str]) -> None:
+    existing = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+    missing = {col: definition for col, definition in columns.items() if col not in existing}
+    for column, definition in missing.items():
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+    if missing:
+        conn.commit()
+
+
 def _create_user_defaults(path: Path) -> None:
     _ensure_parent(path)
     with sqlite3.connect(path) as conn:
@@ -119,6 +128,30 @@ def quiz_directory(workspace: Path, quiz_uuid: str) -> Path:
     return workspace / quiz_uuid
 
 
+def _create_subjects_table(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS subjects (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            subject_uuid TEXT NOT NULL UNIQUE,
+            subject_title TEXT NOT NULL,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """
+    )
+    _ensure_columns(
+        conn,
+        "subjects",
+        {
+            "sort_order": "INTEGER NOT NULL DEFAULT 0",
+            "created_at": "TEXT",
+            "updated_at": "TEXT",
+        },
+    )
+
+
 def _create_questions_db(path: Path) -> None:
     with sqlite3.connect(path) as conn:
         conn.execute(
@@ -134,11 +167,29 @@ def _create_questions_db(path: Path) -> None:
                 question_number INTEGER,
                 illustration_filename TEXT,
                 illustration_width REAL,
-                number_of_lines INTEGER
+                number_of_lines INTEGER,
+                created_at TEXT,
+                updated_at TEXT
             )
             """
         )
         conn.commit()
+        _ensure_columns(
+            conn,
+            "questions",
+            {
+                "question_type": "TEXT",
+                "subject_uuid": "TEXT",
+                "points": "REAL",
+                "question_number": "INTEGER",
+                "illustration_filename": "TEXT",
+                "illustration_width": "REAL",
+                "number_of_lines": "INTEGER",
+                "created_at": "TEXT",
+                "updated_at": "TEXT",
+            },
+        )
+        _create_subjects_table(conn)
 
 
 def _create_answers_db(path: Path) -> None:
@@ -147,13 +198,27 @@ def _create_answers_db(path: Path) -> None:
             """
             CREATE TABLE IF NOT EXISTS answers (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                answer_uuid TEXT NOT NULL UNIQUE,
                 question_uuid TEXT NOT NULL,
                 answer_option TEXT NOT NULL,
-                correct INTEGER NOT NULL DEFAULT 0
+                correct INTEGER NOT NULL DEFAULT 0,
+                answer_order INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT,
+                updated_at TEXT
             )
             """
         )
         conn.commit()
+        _ensure_columns(
+            conn,
+            "answers",
+            {
+                "answer_uuid": "TEXT",
+                "answer_order": "INTEGER",
+                "created_at": "TEXT",
+                "updated_at": "TEXT",
+            },
+        )
 
 
 def ensure_quiz_workspace(workspace: Path, quiz_uuid: str) -> Path:
