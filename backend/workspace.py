@@ -3,6 +3,12 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
+
+def _ensure_file(path: Path, content: str) -> None:
+    _ensure_parent(path)
+    if not path.exists():
+        path.write_text(content, encoding="utf-8")
+
 DEFAULT_STUDENT_INSTRUCTIONS = (
     "Aucun document n'est autorisé. L'usage de la calculatrice est interdit. "
     "Les questions faisant apparaître le symbole ♣ peuvent présenter zéro, une ou plusieurs "
@@ -109,6 +115,61 @@ def provision_user_workspace(root: Path, user_uuid: str) -> Path:
     return workspace
 
 
+def quiz_directory(workspace: Path, quiz_uuid: str) -> Path:
+    return workspace / quiz_uuid
+
+
+def _create_questions_db(path: Path) -> None:
+    with sqlite3.connect(path) as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS questions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                question_uuid TEXT NOT NULL,
+                question_text TEXT NOT NULL,
+                question_type TEXT NOT NULL,
+                subject_title TEXT,
+                subject_uuid TEXT,
+                points REAL,
+                question_number INTEGER,
+                illustration_filename TEXT,
+                illustration_width REAL,
+                number_of_lines INTEGER
+            )
+            """
+        )
+        conn.commit()
+
+
+def _create_answers_db(path: Path) -> None:
+    with sqlite3.connect(path) as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS answers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                question_uuid TEXT NOT NULL,
+                answer_option TEXT NOT NULL,
+                correct INTEGER NOT NULL DEFAULT 0
+            )
+            """
+        )
+        conn.commit()
+
+
+def ensure_quiz_workspace(workspace: Path, quiz_uuid: str) -> Path:
+    quiz_path = quiz_directory(workspace, quiz_uuid)
+    quiz_path.mkdir(parents=True, exist_ok=True)
+    (quiz_path / "illustrations").mkdir(exist_ok=True)
+    (quiz_path / "amc_session").mkdir(exist_ok=True)
+
+    list_path = quiz_path / "list.csv"
+    _ensure_file(list_path, "id,nom,prenom,email\n")
+
+    _create_questions_db(quiz_path / "questions.sqlite")
+    _create_answers_db(quiz_path / "answers.sqlite")
+    return quiz_path
+
+
 def workspace_marker(workspace: Path) -> Path:
     return workspace / ".encrypted"
 
@@ -131,6 +192,8 @@ def is_workspace_encrypted(workspace: Path) -> bool:
 __all__ = [
     "DEFAULT_STUDENT_INSTRUCTIONS",
     "provision_user_workspace",
+    "quiz_directory",
+    "ensure_quiz_workspace",
     "mark_workspace_encrypted",
     "mark_workspace_decrypted",
     "is_workspace_encrypted",
