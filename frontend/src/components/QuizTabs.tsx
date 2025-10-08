@@ -8,6 +8,7 @@ type QuizTab = {
 
 const tabs: QuizTab[] = [
   { label: "Généralités", path: "" },
+  { label: "Sujets", path: "subjects" },
   { label: "Questions", path: "questions" },
   { label: "Compilation", path: "compile" },
   { label: "Analyse", path: "analysis" },
