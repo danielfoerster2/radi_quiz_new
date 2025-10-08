@@ -163,3 +163,103 @@ This page uses tabs to manage quizzes.
 - **Association updates:** When an instructor adjusts selections, the service writes the chosen `id` into `association_association.manual` for existing rows or inserts a new row (`student`, `copy = 0`, `manual`, `auto = NULL`) for previously unrecognized students. It also zeroes `timestamp_annotate` and `timestamp_manual` in `capture.sqlite/capture_page` for the affected internal student numbers so future scans and annotations rebuild against the corrected associations.
 - **Analysis pipeline:** Executes `auto-multiple-choice analyse` against the generated PNGs, then `note` to compute grades. Runs `association-auto` to map ID detections back to `list.csv`, producing `association.sqlite`.
 - **Exports & annotations:** Calls AMC `export` modules (`ods`, `CSV`) to produce `notes.ods` and `notes.csv`, and runs `annotate` to generate corrected PDFs per student inside `cr/corrections/pdf`. The service packages these PDFs into a downloadable ZIP when requested by the frontend.
+
+## Required API Endpoints
+
+### Authentication & Sessions
+- `POST /auth/register` – Create a new email/password account, issue a verification code, and stage the user workspace.
+- `POST /auth/register/verify` – Confirm the emailed verification code and activate the instructor directory.
+- `POST /auth/register/google` – Provision a user from a Google ID token and mark the account as verified.
+- `POST /auth/login` – Authenticate by email/password, falling back to the one-time password when valid.
+- `POST /auth/login/google` – Sign in with Google and refresh the session metadata.
+- `POST /auth/forgot-password` – Generate and email a time-bound one-time password.
+- `POST /auth/reset-password` – Validate the OTP, rotate the salt/hash, and clear the temporary credential.
+- `GET /auth/session` – Return current session context and decrypt the user directory when necessary.
+- `POST /auth/session/refresh` – Extend the session window and bump `last_active`.
+- `POST /auth/logout` – Terminate the session, re-encrypt user storage, and clear server-side session data.
+
+### Account & Profile
+- `GET /me` – Fetch instructor profile details for the settings page.
+- `PUT /me` – Update instructor name fields stored in `user_defaults.sqlite`.
+- `GET /me/defaults` – Retrieve global quiz defaults (institution, instructions, messaging templates).
+- `PUT /me/defaults` – Persist edits to the global defaults back to `user_defaults.sqlite`.
+- `POST /me/email-change` – Initiate an email change by sending a verification code to the new address.
+- `POST /me/email-change/verify` – Confirm the change and update the `users.email` column.
+- `POST /me/password` – Change the password after validating the current credential.
+- `GET /me/export` – Produce a ZIP archive of the instructor workspace for download.
+- `DELETE /me` – Delete the account, associated databases, and on-disk assets.
+
+### Classes & Rosters
+- `GET /classes` – List classes with their associated roster handles.
+- `POST /classes` – Create a new class entry and empty roster placeholder.
+- `GET /classes/{list_uuid}` – Fetch class metadata and current roster preview.
+- `PUT /classes/{list_uuid}` – Rename a class or update descriptive metadata.
+- `PUT /classes/{list_uuid}/students` – Persist roster edits coming from the UI editor.
+- `POST /classes/{list_uuid}/students/import` – Replace the roster by uploading a validated CSV file.
+- `GET /classes/{list_uuid}/students` – Download the roster CSV for local edits.
+- `DELETE /classes/{list_uuid}` – Remove a class alongside its stored CSV file.
+
+### Quizzes
+- `GET /quizzes` – Return dashboard quiz summaries with state, counts, and timestamps.
+- `POST /quizzes` – Create a new quiz, generate a UUID, and seed initial metadata.
+- `GET /quizzes/{quiz_uuid}` – Retrieve quiz metadata needed for the generalities tab.
+- `PUT /quizzes/{quiz_uuid}` – Persist updates to quiz metadata fields.
+- `DELETE /quizzes/{quiz_uuid}` – Delete the quiz directory and its database rows after confirmation.
+- `POST /quizzes/{quiz_uuid}/duplicate` – Clone quiz databases and assets under a new UUID.
+- `POST /quizzes/{quiz_uuid}/lock` – Mark the quiz as locked once printable subjects are generated.
+- `POST /quizzes/{quiz_uuid}/unlock` – Reopen a locked quiz after explicit confirmation.
+
+### Questions & Subjects
+- `GET /quizzes/{quiz_uuid}/questions` – Load subjects, questions, answers, and ordering metadata for the editor.
+- `POST /quizzes/{quiz_uuid}/questions` – Add a question (and create a subject when needed).
+- `PUT /quizzes/{quiz_uuid}/questions/{question_uuid}` – Update question text, type, scoring, and metadata.
+- `DELETE /quizzes/{quiz_uuid}/questions/{question_uuid}` – Remove a question when the quiz is unlocked.
+- `PATCH /quizzes/{quiz_uuid}/questions/order` – Persist reordered questions within and across subjects.
+- `PATCH /quizzes/{quiz_uuid}/subjects/order` – Persist subject reordering.
+- `POST /quizzes/{quiz_uuid}/questions/{question_uuid}/answers` – Append an answer option.
+- `PUT /quizzes/{quiz_uuid}/questions/{question_uuid}/answers/{answer_uuid}` – Edit answer text or correctness.
+- `DELETE /quizzes/{quiz_uuid}/questions/{question_uuid}/answers/{answer_uuid}` – Remove an answer option.
+- `PATCH /quizzes/{quiz_uuid}/questions/{question_uuid}/answers/order` – Store answer ordering adjustments.
+- `POST /quizzes/{quiz_uuid}/questions/{question_uuid}/illustration` – Upload or replace a question illustration.
+- `DELETE /quizzes/{quiz_uuid}/questions/{question_uuid}/illustration` – Remove the stored illustration asset.
+- `POST /quizzes/{quiz_uuid}/ai/questions` – Request AI-assisted question generation and merge results.
+
+### Compilation & Exports
+- `POST /quizzes/{quiz_uuid}/amc/session` – Ensure the AMC workspace exists and sync supporting assets.
+- `POST /quizzes/{quiz_uuid}/amc/latex` – Regenerate `sujet.tex` via the LaTeX service.
+- `GET /quizzes/{quiz_uuid}/amc/latex` – Download the latest `sujet.tex`.
+- `POST /quizzes/{quiz_uuid}/amc/compile` – Run the AMC toolchain with options for student count, randomization, and two-up printing.
+- `GET /quizzes/{quiz_uuid}/amc/exports/sujet.pdf` – Download the compiled subject bundle.
+- `GET /quizzes/{quiz_uuid}/amc/exports/reponses.pdf` – Download the answer key PDF.
+- `GET /quizzes/{quiz_uuid}/amc/logs` – Retrieve logs from the latest compile attempt.
+- `POST /quizzes/{quiz_uuid}/ai/verify-subject` – Launch AI quality checks against the current `sujet.tex`.
+
+### Evaluation & Analysis
+- `POST /quizzes/{quiz_uuid}/uploads/copies` – Upload scanned copies for later processing.
+- `PUT /quizzes/{quiz_uuid}/roster` – Select or upload the roster used for analysis.
+- `POST /quizzes/{quiz_uuid}/analysis` – Kick off the AMC analyze pipeline for the uploaded copies.
+- `GET /quizzes/{quiz_uuid}/analysis/status` – Poll the state of the ongoing analysis job.
+- `GET /quizzes/{quiz_uuid}/analysis/checkboxes` – Retrieve checkbox classifications and threshold metadata.
+- `PATCH /quizzes/{quiz_uuid}/analysis/checkboxes` – Persist manual overrides and updated thresholds.
+- `GET /quizzes/{quiz_uuid}/analysis/page-images/{student}/{page}` – Serve page imagery for checkbox review.
+- `GET /quizzes/{quiz_uuid}/analysis/associations` – Fetch handwriting matches and auto/manual associations.
+- `PATCH /quizzes/{quiz_uuid}/analysis/associations` – Update manual student associations.
+- `POST /quizzes/{quiz_uuid}/analysis/recalculate` – Re-run grading, exports, and annotations after edits.
+- `GET /quizzes/{quiz_uuid}/analysis/notes` – Return aggregated grade data for UI display.
+- `GET /quizzes/{quiz_uuid}/analysis/corrections.zip` – Download the ZIP of annotated corrections.
+
+### Email & Support
+- `POST /emails/verification` – Send verification or change-email codes through the email service.
+- `POST /emails/password-reset` – Deliver password reset one-time passwords when the auth flow requests them.
+- `POST /quizzes/{quiz_uuid}/emails/preview` – Generate per-student email previews with grades and attachments.
+- `POST /quizzes/{quiz_uuid}/emails/send` – Dispatch correction emails sequentially with progress reporting.
+- `POST /support/requests` – Submit instructor support tickets routed to the support channel.
+
+### AI Tooling
+- `POST /ai/questions` – General endpoint for topic/difficulty-driven question generation jobs.
+- `POST /ai/latex/review` – Run grammar, factual, and LaTeX syntax checks on a provided `sujet.tex` payload.
+- `POST /ai/handwriting/transcribe` – Transcribe handwriting crops into `{ "prenom": "...", "nom": "..." }` records with confidence scores.
+
+### Utilities
+- `GET /health` – Basic service health probe for deployment and monitoring.
+- `GET /metrics` – Expose operational metrics (latency, token usage, queue depth) for observability.
