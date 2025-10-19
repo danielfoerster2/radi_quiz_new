@@ -219,10 +219,13 @@ const LandingPage = () => {
         setLoginOutput(message);
         if (response.status === 409 && requiresReset) {
           setActiveTab("recovery");
-          setResetForm((prev) => ({
-            ...prev,
+          setResetForm({
             email: loginForm.email,
-          }));
+            otp: loginForm.password,
+            newPassword: "",
+            confirmNewPassword: "",
+          });
+          setResetOutput("Code à usage unique accepté. Choisissez un nouveau mot de passe.");
         }
         return;
       }
