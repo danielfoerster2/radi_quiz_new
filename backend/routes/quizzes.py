@@ -45,6 +45,27 @@ BOOLEAN_FIELDS = {
     "two_up_printing",
 }
 
+COLUMN_DEFINITIONS: Dict[str, str] = {
+    "quiz_uuid": "TEXT",
+    "quiz_title": "TEXT",
+    "creation_date": "TEXT",
+    "quiz_state": "TEXT",
+    "id_coding": "TEXT",
+    "number_of_questions": "INTEGER",
+    "institution_name": "TEXT",
+    "student_instructions": "TEXT",
+    "coding_explanation": "TEXT",
+    "email_subject": "TEXT",
+    "email_body": "TEXT",
+    "class_title": "TEXT",
+    "date_of_quiz": "TEXT",
+    "duration": "TEXT",
+    "quiz_language": "TEXT",
+    "random_question_order": "INTEGER",
+    "random_answer_order": "INTEGER",
+    "two_up_printing": "INTEGER",
+}
+
 DEFAULT_QUIZ_TITLE = "Nouveau quiz"
 
 
@@ -107,6 +128,18 @@ def _ensure_quizes_table(conn: sqlite3.Connection) -> None:
         """
     )
     conn.commit()
+    existing_columns = {row[1] for row in conn.execute("PRAGMA table_info(quizes)")}
+    missing_columns = [
+        (column, definition)
+        for column, definition in COLUMN_DEFINITIONS.items()
+        if column not in existing_columns
+    ]
+    for column, definition in missing_columns:
+        conn.execute(f"ALTER TABLE quizes ADD COLUMN {column} {definition}")
+        if column in BOOLEAN_FIELDS:
+            conn.execute(f"UPDATE quizes SET {column} = 0 WHERE {column} IS NULL")
+    if missing_columns:
+        conn.commit()
 
 
 def _get_connection() -> sqlite3.Connection:
