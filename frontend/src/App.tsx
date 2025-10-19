@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import LandingPage from "./pages/LandingPage";
 import DashboardPage from "./pages/DashboardPage";
 import SettingsPage from "./pages/SettingsPage";
+import HelpPage from "./pages/HelpPage";
 import { parseJson } from "./utils/api";
 
 export type User = {
@@ -14,7 +15,7 @@ export type User = {
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"dashboard" | "settings">("dashboard");
+  const [view, setView] = useState<"dashboard" | "settings" | "help">("dashboard");
 
   const loadSession = useCallback(async () => {
     try {
@@ -71,6 +72,10 @@ const App = () => {
     setView("dashboard");
   }, []);
 
+  const handleNavigateHelp = useCallback(() => {
+    setView("help");
+  }, []);
+
   const handleUserUpdate = useCallback((nextUser: Partial<User>) => {
     setUser((prev) => (prev ? { ...prev, ...nextUser } : prev));
   }, []);
@@ -95,17 +100,23 @@ const App = () => {
         onBack={handleNavigateDashboard}
         onLogout={handleLogout}
         onUserUpdate={handleUserUpdate}
+        onNavigateHelp={handleNavigateHelp}
       />
     );
   }
 
-  return (
-    <DashboardPage
-      user={user}
-      onLogout={handleLogout}
-      onNavigateSettings={handleNavigateSettings}
-    />
-  );
+  if (view === "help") {
+    return (
+      <HelpPage
+        user={user}
+        onBack={handleNavigateDashboard}
+        onLogout={handleLogout}
+        onNavigateSettings={handleNavigateSettings}
+      />
+    );
+  }
+
+  return <DashboardPage user={user} onLogout={handleLogout} onNavigateSettings={handleNavigateSettings} onNavigateHelp={handleNavigateHelp} />;
 };
 
 export default App;

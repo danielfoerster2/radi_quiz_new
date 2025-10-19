@@ -47,6 +47,7 @@ type SettingsPageProps = {
   onBack: () => void;
   onLogout: () => void;
   onUserUpdate: (user: Partial<User>) => void;
+  onNavigateHelp: () => void;
 };
 
 const DEFAULT_INSTRUCTIONS =
@@ -61,7 +62,7 @@ const emptyDefaults: Defaults = {
   quiz_language: "fr",
 };
 
-const SettingsPage = ({ user, onBack, onLogout, onUserUpdate }: SettingsPageProps) => {
+const SettingsPage = ({ user, onBack, onLogout, onUserUpdate, onNavigateHelp }: SettingsPageProps) => {
   const [profile, setProfile] = useState<InstructorProfile>({
     first_name: "",
     last_name: "",
@@ -689,6 +690,9 @@ const SettingsPage = ({ user, onBack, onLogout, onUserUpdate }: SettingsPageProp
           <div className="settings__hero-actions">
             <button className="settings__secondary" onClick={onBack}>
               Retour au tableau de bord
+            </button>
+            <button className="settings__secondary" onClick={onNavigateHelp}>
+              Centre d'aide
             </button>
             <button className="settings__secondary" onClick={onLogout}>
               Déconnexion
