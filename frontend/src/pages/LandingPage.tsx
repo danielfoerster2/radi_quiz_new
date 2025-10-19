@@ -615,18 +615,18 @@ const LandingPage = () => {
                         readOnly
                       />
                     </div>
+                    <div className="form-field">
+                      <label htmlFor="reset-otp">Code à usage unique</label>
+                      <input
+                        id="reset-otp"
+                        value={resetForm.otp}
+                        onChange={(event) =>
+                          setResetForm((prev) => ({ ...prev, otp: event.target.value }))
+                        }
+                        required
+                      />
+                    </div>
                     <div className="form-grid">
-                      <div className="form-field">
-                        <label htmlFor="reset-otp">Code à usage unique</label>
-                        <input
-                          id="reset-otp"
-                          value={resetForm.otp}
-                          onChange={(event) =>
-                            setResetForm((prev) => ({ ...prev, otp: event.target.value }))
-                          }
-                          required
-                        />
-                      </div>
                       <div className="form-field">
                         <label htmlFor="reset-password">Nouveau mot de passe</label>
                         <input
@@ -640,19 +640,22 @@ const LandingPage = () => {
                           minLength={8}
                         />
                       </div>
-                    </div>
-                    <div className="form-field">
-                      <label htmlFor="reset-password-confirm">Confirmer le nouveau mot de passe</label>
-                      <input
-                        id="reset-password-confirm"
-                        type="password"
-                        value={resetForm.confirmNewPassword}
-                        onChange={(event) =>
-                          setResetForm((prev) => ({ ...prev, confirmNewPassword: event.target.value }))
-                        }
-                        required
-                        minLength={8}
-                      />
+                      <div className="form-field">
+                        <label htmlFor="reset-password-confirm">Confirmer le nouveau mot de passe</label>
+                        <input
+                          id="reset-password-confirm"
+                          type="password"
+                          value={resetForm.confirmNewPassword}
+                          onChange={(event) =>
+                            setResetForm((prev) => ({
+                              ...prev,
+                              confirmNewPassword: event.target.value,
+                            }))
+                          }
+                          required
+                          minLength={8}
+                        />
+                      </div>
                     </div>
                     <button type="submit">Définir le nouveau mot de passe</button>
                   </fieldset>
