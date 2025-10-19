@@ -1,0 +1,324 @@
+.dashboard {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at top, rgba(10, 132, 255, 0.08), transparent 55%),
+    linear-gradient(180deg, #fdfdfd 0%, #f2f5fb 100%);
+}
+
+.dashboard__hero {
+  background: linear-gradient(135deg, rgba(10, 132, 255, 0.12) 0%, rgba(15, 25, 35, 0.15) 100%);
+  padding: 4.5rem 1.5rem 5.5rem;
+}
+
+.dashboard__hero-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.dashboard__hero-headline {
+  max-width: 640px;
+  color: #0f172a;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dashboard__eyebrow {
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  font-weight: 600;
+  color: rgba(15, 23, 42, 0.75);
+}
+
+.dashboard__hero-headline h1 {
+  margin: 0;
+  font-size: clamp(2rem, 3vw, 2.6rem);
+}
+
+.dashboard__hero-headline p {
+  margin: 0;
+  font-size: 1rem;
+  color: rgba(15, 23, 42, 0.74);
+}
+
+.dashboard__hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.dashboard__hero-actions button {
+  border-radius: 12px;
+  padding: 0.75rem 1.4rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.dashboard__primary {
+  background: #0a84ff;
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(10, 132, 255, 0.35);
+}
+
+.dashboard__primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.dashboard__primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #0066cc;
+}
+
+.dashboard__secondary {
+  background: rgba(255, 255, 255, 0.18);
+  color: #0f172a;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+.dashboard__secondary:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.dashboard__main {
+  width: 100%;
+  max-width: 1100px;
+  margin: -48px auto 0;
+  padding: 0 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.dashboard__summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.dashboard__card {
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 1.75rem;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.dashboard__card h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: rgba(15, 23, 42, 0.72);
+}
+
+.dashboard__count {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dashboard__status,
+.dashboard__error {
+  border-radius: 18px;
+  padding: 0.9rem 1.2rem;
+  font-size: 0.95rem;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+}
+
+.dashboard__status {
+  background: rgba(10, 132, 255, 0.1);
+  color: #043c73;
+  border: 1px solid rgba(10, 132, 255, 0.2);
+}
+
+.dashboard__error {
+  background: rgba(220, 38, 38, 0.12);
+  color: #7f1d1d;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.dashboard__quizzes {
+  background: #ffffff;
+  border-radius: 26px;
+  padding: 2rem;
+  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.12);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dashboard__quizzes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dashboard__quizzes-header h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  color: #0f172a;
+}
+
+.dashboard__refresh {
+  border: none;
+  border-radius: 12px;
+  padding: 0.6rem 1.1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  background: rgba(10, 132, 255, 0.12);
+  color: #0a84ff;
+  transition: background 0.2s ease;
+}
+
+.dashboard__refresh:hover:not(:disabled) {
+  background: rgba(10, 132, 255, 0.22);
+}
+
+.dashboard__refresh:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dashboard__placeholder {
+  padding: 1.5rem;
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.04);
+  color: rgba(15, 23, 42, 0.65);
+  text-align: center;
+}
+
+.dashboard__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.dashboard__list-item {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08);
+}
+
+.dashboard__list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dashboard__list-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+
+.dashboard__badge {
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dashboard__badge--locked {
+  background: rgba(220, 38, 38, 0.12);
+  color: #991b1b;
+}
+
+.dashboard__badge--unlocked {
+  background: rgba(16, 185, 129, 0.12);
+  color: #065f46;
+}
+
+.dashboard__meta {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  margin: 0;
+}
+
+.dashboard__meta dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(15, 23, 42, 0.5);
+}
+
+.dashboard__meta dd {
+  margin: 0;
+  font-size: 0.95rem;
+  color: rgba(15, 23, 42, 0.85);
+  word-break: break-word;
+}
+
+.dashboard__quiz-id {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.8rem;
+  color: rgba(15, 23, 42, 0.6);
+}
+
+.dashboard__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.dashboard__actions button {
+  border: none;
+  border-radius: 12px;
+  padding: 0.55rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: rgba(15, 23, 42, 0.06);
+  color: #0f172a;
+  transition: background 0.2s ease;
+}
+
+.dashboard__actions button:hover:not(:disabled) {
+  background: rgba(15, 23, 42, 0.12);
+}
+
+.dashboard__actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 720px) {
+  .dashboard__hero-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard__main {
+    margin-top: -32px;
+  }
+
+  .dashboard__quizzes {
+    padding: 1.5rem;
+  }
+}

@@ -1,4 +1,5 @@
 import { FormEvent, useMemo, useState } from "react";
+import type { User } from "../App";
 import "./LandingPage.css";
 
 type RegisterForm = {
@@ -30,8 +31,6 @@ type ResetForm = {
 
 type AuthTab = "login" | "register" | "recovery";
 
-const formatResponse = (data: unknown) => JSON.stringify(data, null, 2);
-
 const features = [
   {
     title: "Flux AMC intégré",
@@ -50,7 +49,11 @@ const features = [
   },
 ];
 
-const LandingPage = () => {
+type LandingPageProps = {
+  onAuthenticated?: (user: User) => void;
+};
+
+const LandingPage = ({ onAuthenticated }: LandingPageProps) => {
   const [activeTab, setActiveTab] = useState<AuthTab>("login");
 
   const [registerForm, setRegisterForm] = useState<RegisterForm>({
@@ -121,6 +124,7 @@ const LandingPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           email: registerForm.email,
           password: registerForm.password,
@@ -162,6 +166,7 @@ const LandingPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           email: verifyForm.email,
           verification_code: verifyForm.verificationCode,
@@ -182,7 +187,13 @@ const LandingPage = () => {
         return;
       }
 
-      setVerifyOutput(formatResponse(data));
+      const successMessage =
+        (data as { message?: string })?.message ?? "Adresse vérifiée avec succès.";
+      setVerifyOutput(successMessage);
+      const authenticatedUser = (data as { user?: User })?.user;
+      if (authenticatedUser) {
+        onAuthenticated?.(authenticatedUser);
+      }
     } catch (error) {
       setVerifyOutput(error instanceof Error ? error.message : String(error));
     }
@@ -199,6 +210,7 @@ const LandingPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           email: loginForm.email,
           password: loginForm.password,
@@ -230,7 +242,11 @@ const LandingPage = () => {
         return;
       }
 
-      setLoginOutput(formatResponse(data));
+      setLoginOutput("Connexion réussie. Redirection en cours…");
+      const authenticatedUser = (data as { user?: User })?.user;
+      if (authenticatedUser) {
+        onAuthenticated?.(authenticatedUser);
+      }
     } catch (error) {
       setLoginOutput(error instanceof Error ? error.message : String(error));
     }
@@ -247,6 +263,7 @@ const LandingPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           email: forgotForm.email,
         }),
@@ -296,6 +313,7 @@ const LandingPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           email: resetForm.email,
           otp: resetForm.otp,
@@ -337,6 +355,10 @@ const LandingPage = () => {
         password: "",
       });
       setLoginOutput("Mot de passe réinitialisé. Vous êtes connecté.");
+      const authenticatedUser = (data as { user?: User })?.user;
+      if (authenticatedUser) {
+        onAuthenticated?.(authenticatedUser);
+      }
     } catch (error) {
       setResetOutput(error instanceof Error ? error.message : String(error));
     }
