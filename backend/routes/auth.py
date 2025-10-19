@@ -189,12 +189,7 @@ def register():
 
     send_verification_email(email, verification_code)
 
-    payload = {
-        "message": "Verification code sent.",
-    }
-    if current_app.config.get("ENVIRONMENT") != "production":
-        payload["verification_code"] = verification_code
-    return _json_success(payload, status=201)
+    return _json_success({"message": "Verification code sent."}, status=201)
 
 
 @auth_bp.route("/register/verify", methods=["POST"])
@@ -453,10 +448,7 @@ def forgot_password():
 
     send_password_reset_email(email, otp, expires_at)
 
-    payload = {"message": "One-time password sent."}
-    if current_app.config.get("ENVIRONMENT") != "production":
-        payload["one_time_password"] = otp
-    return _json_success(payload)
+    return _json_success({"message": "If the account exists, an email has been sent."})
 
 
 @auth_bp.route("/reset-password", methods=["POST"])

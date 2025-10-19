@@ -25,23 +25,34 @@ class EmailConfig:
 
     @classmethod
     def from_env(cls) -> "EmailConfig":
-        use_tls_value = os.environ["SMTP_USE_TLS"].strip().lower()
-        if use_tls_value in {"1", "true", "yes"}:
-            use_tls = True
-        elif use_tls_value in {"0", "false", "no"}:
-            use_tls = False
-        else:
-            raise ValueError("SMTP_USE_TLS must be one of: 1/0/true/false/yes/no.")
+        def _get_env(key: str, default: Optional[str] = None) -> Optional[str]:
+            value = os.environ.get(key, default)
+            if value is None:
+                return None
+            value = value.strip()
+            return value or None
 
-        username = os.environ["SMTP_USER"]
-        password = os.environ["SMTP_PASSWORD"]
+        host = _get_env("SMTP_HOST")
+        if not host:
+            raise KeyError("SMTP_HOST")
+
+        try:
+            port = int(_get_env("SMTP_PORT", "587") or "587")
+        except ValueError as exc:
+            raise ValueError("SMTP_PORT must be an integer.") from exc
+
+        username = _get_env("SMTP_USER")
+        password = _get_env("SMTP_PASSWORD")
+        from_address = _get_env("SMTP_FROM")
+        if not from_address:
+            raise KeyError("SMTP_FROM")
         return cls(
-            host=os.environ["SMTP_HOST"],
-            port=int(os.environ["SMTP_PORT"]),
-            username=username or None,
-            password=password or None,
-            use_tls=use_tls,
-            from_address=os.environ["SMTP_FROM"],
+            host=host,
+            port=port,
+            username=username,
+            password=password,
+            use_tls=True,
+            from_address=from_address,
         )
 
 
