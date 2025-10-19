@@ -14,6 +14,7 @@ type Quiz = {
 type DashboardPageProps = {
   user: User;
   onLogout: () => void;
+  onNavigateSettings: () => void;
 };
 
 const formatDate = (iso: string | null | undefined) => {
@@ -30,7 +31,7 @@ const formatDate = (iso: string | null | undefined) => {
   }
 };
 
-const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
+const DashboardPage = ({ user, onLogout, onNavigateSettings }: DashboardPageProps) => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionBusy, setActionBusy] = useState(false);
@@ -187,6 +188,9 @@ const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
           <div className="dashboard__hero-actions">
             <button className="dashboard__primary" onClick={handleCreateQuiz} disabled={actionBusy}>
               Nouveau quiz
+            </button>
+            <button className="dashboard__secondary" onClick={onNavigateSettings}>
+              Paramètres
             </button>
             <button className="dashboard__secondary" onClick={onLogout}>
               Déconnexion

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import LandingPage from "./pages/LandingPage";
 import DashboardPage from "./pages/DashboardPage";
+import SettingsPage from "./pages/SettingsPage";
 import { parseJson } from "./utils/api";
 
 export type User = {
@@ -13,6 +14,7 @@ export type User = {
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<"dashboard" | "settings">("dashboard");
 
   const loadSession = useCallback(async () => {
     try {
@@ -27,6 +29,9 @@ const App = () => {
       const data = await parseJson<{ user?: User }>(response);
       if (data?.user) {
         setUser(data.user);
+        setView("dashboard");
+      } else {
+        setUser(null);
       }
     } catch {
       setUser(null);
@@ -41,6 +46,7 @@ const App = () => {
 
   const handleAuthenticated = useCallback((nextUser: User) => {
     setUser(nextUser);
+    setView("dashboard");
   }, []);
 
   const handleLogout = useCallback(async () => {
@@ -53,7 +59,20 @@ const App = () => {
       // ignore
     } finally {
       setUser(null);
+      setView("dashboard");
     }
+  }, []);
+
+  const handleNavigateSettings = useCallback(() => {
+    setView("settings");
+  }, []);
+
+  const handleNavigateDashboard = useCallback(() => {
+    setView("dashboard");
+  }, []);
+
+  const handleUserUpdate = useCallback((nextUser: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...nextUser } : prev));
   }, []);
 
   if (loading) {
@@ -69,7 +88,24 @@ const App = () => {
     return <LandingPage onAuthenticated={handleAuthenticated} />;
   }
 
-  return <DashboardPage user={user} onLogout={handleLogout} />;
+  if (view === "settings") {
+    return (
+      <SettingsPage
+        user={user}
+        onBack={handleNavigateDashboard}
+        onLogout={handleLogout}
+        onUserUpdate={handleUserUpdate}
+      />
+    );
+  }
+
+  return (
+    <DashboardPage
+      user={user}
+      onLogout={handleLogout}
+      onNavigateSettings={handleNavigateSettings}
+    />
+  );
 };
 
 export default App;
