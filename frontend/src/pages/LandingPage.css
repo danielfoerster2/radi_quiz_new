@@ -229,6 +229,23 @@
   line-height: 1.4;
 }
 
+.landing-panel__unlock {
+  align-self: flex-start;
+  margin-top: -0.5rem;
+  margin-bottom: 0.75rem;
+  background: none;
+  border: none;
+  color: #0a84ff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0;
+  cursor: pointer;
+}
+
+.landing-panel__unlock:hover {
+  text-decoration: underline;
+}
+
 .landing-panel__divider {
   display: flex;
   align-items: center;

@@ -65,6 +65,7 @@ const LandingPage = () => {
     verificationCode: "",
   });
   const [verifyOutput, setVerifyOutput] = useState<string | null>(null);
+  const [verifyEmailLocked, setVerifyEmailLocked] = useState(false);
 
   const [loginForm, setLoginForm] = useState<LoginForm>({
     email: "",
@@ -142,6 +143,11 @@ const LandingPage = () => {
       const successMessage =
         (data as { message?: string })?.message ?? "Code de vérification envoyé.";
       setRegisterOutput(`${successMessage} Vérifiez votre boîte de réception.`);
+      setVerifyForm({
+        email: registerForm.email,
+        verificationCode: "",
+      });
+      setVerifyEmailLocked(true);
     } catch (error) {
       setRegisterOutput(error instanceof Error ? error.message : String(error));
     }
@@ -492,12 +498,25 @@ const LandingPage = () => {
                         id="verify-email"
                         type="email"
                         value={verifyForm.email}
-                        onChange={(event) =>
-                          setVerifyForm((prev) => ({ ...prev, email: event.target.value }))
-                        }
+                        onChange={(event) => {
+                          if (verifyEmailLocked) {
+                            return;
+                          }
+                          setVerifyForm((prev) => ({ ...prev, email: event.target.value }));
+                        }}
                         required
+                        readOnly={verifyEmailLocked}
                       />
                     </div>
+                    {verifyEmailLocked ? (
+                      <button
+                        type="button"
+                        className="landing-panel__unlock"
+                        onClick={() => setVerifyEmailLocked(false)}
+                      >
+                        Modifier l'adresse e-mail
+                      </button>
+                    ) : null}
                     <div className="form-field">
                       <label htmlFor="verify-code">Code de vérification</label>
                       <input
