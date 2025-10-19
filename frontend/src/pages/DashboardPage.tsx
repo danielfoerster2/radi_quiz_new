@@ -61,20 +61,6 @@ const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
     loadQuizzes();
   }, [loadQuizzes]);
 
-  const quizCountByState = useMemo(() => {
-    return quizzes.reduce(
-      (acc, quiz) => {
-        if (quiz.quiz_state === "locked") {
-          acc.locked += 1;
-        } else {
-          acc.unlocked += 1;
-        }
-        return acc;
-      },
-      { locked: 0, unlocked: 0 }
-    );
-  }, [quizzes]);
-
   const runAction = useCallback(
     async (fn: () => Promise<void>) => {
       setActionBusy(true);
@@ -210,21 +196,6 @@ const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
       </header>
 
       <main className="dashboard__main">
-        <section className="dashboard__summary">
-          <article className="dashboard__card">
-            <h2>Total des quizzes</h2>
-            <span className="dashboard__count">{quizzes.length}</span>
-          </article>
-          <article className="dashboard__card">
-            <h2>Quizzes actifs</h2>
-            <span className="dashboard__count">{quizCountByState.unlocked}</span>
-          </article>
-          <article className="dashboard__card">
-            <h2>Quizzes verrouillés</h2>
-            <span className="dashboard__count">{quizCountByState.locked}</span>
-          </article>
-        </section>
-
         {statusMessage ? <div className="dashboard__status">{statusMessage}</div> : null}
         {errorMessage ? <div className="dashboard__error">{errorMessage}</div> : null}
 
