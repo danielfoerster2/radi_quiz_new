@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { User } from "../App";
 import { parseJson } from "../utils/api";
 import "./DashboardPage.css";
@@ -16,6 +16,7 @@ type DashboardPageProps = {
   onLogout: () => void;
   onNavigateSettings: () => void;
   onNavigateHelp: () => void;
+  onOpenQuiz: (quizUuid: string) => void;
 };
 
 const formatDate = (iso: string | null | undefined) => {
@@ -32,7 +33,7 @@ const formatDate = (iso: string | null | undefined) => {
   }
 };
 
-const DashboardPage = ({ user, onLogout, onNavigateSettings, onNavigateHelp }: DashboardPageProps) => {
+const DashboardPage = ({ user, onLogout, onNavigateSettings, onNavigateHelp, onOpenQuiz }: DashboardPageProps) => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionBusy, setActionBusy] = useState(false);
@@ -252,6 +253,9 @@ const DashboardPage = ({ user, onLogout, onNavigateSettings, onNavigateHelp }: D
                       </div>
                     </dl>
                     <div className="dashboard__actions">
+                      <button onClick={() => onOpenQuiz(quiz.quiz_uuid)} disabled={actionBusy}>
+                        Ouvrir
+                      </button>
                       <button onClick={() => handleDuplicateQuiz(quiz)} disabled={actionBusy}>
                         Dupliquer
                       </button>

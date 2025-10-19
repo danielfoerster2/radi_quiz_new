@@ -3,6 +3,7 @@ import LandingPage from "./pages/LandingPage";
 import DashboardPage from "./pages/DashboardPage";
 import SettingsPage from "./pages/SettingsPage";
 import HelpPage from "./pages/HelpPage";
+import QuizPage from "./pages/QuizPage";
 import { parseJson } from "./utils/api";
 
 export type User = {
@@ -15,7 +16,8 @@ export type User = {
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"dashboard" | "settings" | "help">("dashboard");
+  const [view, setView] = useState<"dashboard" | "settings" | "help" | "quiz">("dashboard");
+  const [currentQuizId, setCurrentQuizId] = useState<string | null>(null);
 
   const loadSession = useCallback(async () => {
     try {
@@ -31,8 +33,10 @@ const App = () => {
       if (data?.user) {
         setUser(data.user);
         setView("dashboard");
+        setCurrentQuizId(null);
       } else {
         setUser(null);
+        setCurrentQuizId(null);
       }
     } catch {
       setUser(null);
@@ -48,6 +52,7 @@ const App = () => {
   const handleAuthenticated = useCallback((nextUser: User) => {
     setUser(nextUser);
     setView("dashboard");
+    setCurrentQuizId(null);
   }, []);
 
   const handleLogout = useCallback(async () => {
@@ -61,6 +66,7 @@ const App = () => {
     } finally {
       setUser(null);
       setView("dashboard");
+      setCurrentQuizId(null);
     }
   }, []);
 
@@ -70,10 +76,16 @@ const App = () => {
 
   const handleNavigateDashboard = useCallback(() => {
     setView("dashboard");
+    setCurrentQuizId(null);
   }, []);
 
   const handleNavigateHelp = useCallback(() => {
     setView("help");
+  }, []);
+
+  const handleOpenQuiz = useCallback((quizUuid: string) => {
+    setCurrentQuizId(quizUuid);
+    setView("quiz");
   }, []);
 
   const handleUserUpdate = useCallback((nextUser: Partial<User>) => {
@@ -116,7 +128,28 @@ const App = () => {
     );
   }
 
-  return <DashboardPage user={user} onLogout={handleLogout} onNavigateSettings={handleNavigateSettings} onNavigateHelp={handleNavigateHelp} />;
+  if (view === "quiz" && currentQuizId) {
+    return (
+      <QuizPage
+        user={user}
+        quizUuid={currentQuizId}
+        onBack={handleNavigateDashboard}
+        onLogout={handleLogout}
+        onNavigateSettings={handleNavigateSettings}
+        onNavigateHelp={handleNavigateHelp}
+      />
+    );
+  }
+
+  return (
+    <DashboardPage
+      user={user}
+      onLogout={handleLogout}
+      onNavigateSettings={handleNavigateSettings}
+      onNavigateHelp={handleNavigateHelp}
+      onOpenQuiz={handleOpenQuiz}
+    />
+  );
 };
 
 export default App;
