@@ -139,7 +139,9 @@ const LandingPage = () => {
         return;
       }
 
-      setRegisterOutput(formatResponse(data));
+      const successMessage =
+        (data as { message?: string })?.message ?? "Code de vérification envoyé.";
+      setRegisterOutput(`${successMessage} Vérifiez votre boîte de réception.`);
     } catch (error) {
       setRegisterOutput(error instanceof Error ? error.message : String(error));
     }
