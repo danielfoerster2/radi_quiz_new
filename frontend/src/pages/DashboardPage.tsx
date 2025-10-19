@@ -95,10 +95,14 @@ const DashboardPage = ({ user, onLogout, onNavigateSettings, onNavigateHelp, onO
         throw new Error("La création du quiz a échoué.");
       }
       const data = await parseJson<{ quiz?: Quiz }>(response);
-      const quizTitle = data?.quiz?.quiz_title ?? "Nouveau quiz";
+      const created = data?.quiz;
+      const quizTitle = created?.quiz_title ?? "Nouveau quiz";
       setStatusMessage(`Quiz « ${quizTitle} » créé.`);
+      if (created) {
+        onOpenQuiz(created.quiz_uuid);
+      }
     });
-  }, [runAction]);
+  }, [runAction, onOpenQuiz]);
 
   const handleDuplicateQuiz = useCallback(
     (quiz: Quiz) => {
