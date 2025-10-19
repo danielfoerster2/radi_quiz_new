@@ -1,5 +1,6 @@
 import { FormEvent, useMemo, useState } from "react";
 import type { User } from "../App";
+import { parseJson } from "../utils/api";
 import "./LandingPage.css";
 
 type RegisterForm = {
@@ -131,20 +132,19 @@ const LandingPage = ({ onAuthenticated }: LandingPageProps) => {
         }),
       });
 
-      const data = await response.json();
+      const data = await parseJson<{ error?: string; message?: string }>(response);
       if (!response.ok) {
         const message =
           response.status === 400
             ? "Le mot de passe doit comporter 8 à 30 caractères, avec une majuscule, une minuscule, un chiffre et un caractère spécial."
             : response.status === 409
             ? "Ce compte existe déjà. Veuillez vous connecter."
-            : (data as { error?: string })?.error ?? "Échec de l'inscription.";
+            : data?.error ?? "Échec de l'inscription.";
         setRegisterOutput(message);
         return;
       }
 
-      const successMessage =
-        (data as { message?: string })?.message ?? "Code de vérification envoyé.";
+      const successMessage = data?.message ?? "Code de vérification envoyé.";
       setRegisterOutput(`${successMessage} Vérifiez votre boîte de réception.`);
       setVerifyForm({
         email: registerForm.email,
@@ -173,7 +173,7 @@ const LandingPage = ({ onAuthenticated }: LandingPageProps) => {
         }),
       });
 
-      const data = await response.json();
+      const data = await parseJson<{ error?: string; message?: string; user?: User }>(response);
       if (!response.ok) {
         const message =
           response.status === 400
@@ -182,15 +182,14 @@ const LandingPage = ({ onAuthenticated }: LandingPageProps) => {
             ? "Compte introuvable."
             : response.status === 409
             ? "Ce compte est déjà vérifié. Vous pouvez vous connecter."
-            : (data as { error?: string })?.error ?? "Échec de la vérification.";
+            : data?.error ?? "Échec de la vérification.";
         setVerifyOutput(message);
         return;
       }
 
-      const successMessage =
-        (data as { message?: string })?.message ?? "Adresse vérifiée avec succès.";
+      const successMessage = data?.message ?? "Adresse vérifiée avec succès.";
       setVerifyOutput(successMessage);
-      const authenticatedUser = (data as { user?: User })?.user;
+      const authenticatedUser = data?.user;
       if (authenticatedUser) {
         onAuthenticated?.(authenticatedUser);
       }
@@ -217,9 +216,13 @@ const LandingPage = ({ onAuthenticated }: LandingPageProps) => {
         }),
       });
 
-      const data = await response.json();
+      const data = await parseJson<{
+        error?: string;
+        requires_password_reset?: boolean;
+        user?: User;
+      }>(response);
       if (!response.ok) {
-        const requiresReset = (data as { requires_password_reset?: boolean })?.requires_password_reset;
+        const requiresReset = data?.requires_password_reset;
         const message =
           response.status === 401
             ? "Adresse e-mail ou mot de passe incorrect."
@@ -227,7 +230,7 @@ const LandingPage = ({ onAuthenticated }: LandingPageProps) => {
             ? "Code à usage unique accepté. Veuillez réinitialiser votre mot de passe."
             : response.status === 409
             ? "Ce compte nécessite une connexion Google ou une réinitialisation de mot de passe."
-            : (data as { error?: string })?.error ?? "Échec de la connexion.";
+            : data?.error ?? "Échec de la connexion.";
         setLoginOutput(message);
         if (response.status === 409 && requiresReset) {
           setActiveTab("recovery");
@@ -243,7 +246,7 @@ const LandingPage = ({ onAuthenticated }: LandingPageProps) => {
       }
 
       setLoginOutput("Connexion réussie. Redirection en cours…");
-      const authenticatedUser = (data as { user?: User })?.user;
+      const authenticatedUser = data?.user;
       if (authenticatedUser) {
         onAuthenticated?.(authenticatedUser);
       }
@@ -269,12 +272,12 @@ const LandingPage = ({ onAuthenticated }: LandingPageProps) => {
         }),
       });
 
-      const data = await response.json();
+      const data = await parseJson<{ error?: string }>(response);
       if (!response.ok) {
         const message =
           response.status === 400
             ? "Adresse e-mail invalide."
-            : (data as { error?: string })?.error ?? "Échec de la demande.";
+            : data?.error ?? "Échec de la demande.";
         setForgotOutput(message);
         return;
       }
@@ -321,9 +324,9 @@ const LandingPage = ({ onAuthenticated }: LandingPageProps) => {
         }),
       });
 
-      const data = await response.json();
+      const data = await parseJson<{ error?: string; user?: User }>(response);
       if (!response.ok) {
-        const backendMessage = (data as { error?: string })?.error || "";
+        const backendMessage = data?.error || "";
         let message = "Échec de la réinitialisation.";
         if (response.status === 400) {
           const normalized = backendMessage.toLowerCase();
@@ -355,7 +358,7 @@ const LandingPage = ({ onAuthenticated }: LandingPageProps) => {
         password: "",
       });
       setLoginOutput("Mot de passe réinitialisé. Vous êtes connecté.");
-      const authenticatedUser = (data as { user?: User })?.user;
+      const authenticatedUser = data?.user;
       if (authenticatedUser) {
         onAuthenticated?.(authenticatedUser);
       }

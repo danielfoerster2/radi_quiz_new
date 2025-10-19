@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import LandingPage from "./pages/LandingPage";
 import DashboardPage from "./pages/DashboardPage";
+import { parseJson } from "./utils/api";
 
 export type User = {
   email: string;
@@ -23,8 +24,8 @@ const App = () => {
         setUser(null);
         return;
       }
-      const data = (await response.json()) as { user?: User };
-      if (data.user) {
+      const data = await parseJson<{ user?: User }>(response);
+      if (data?.user) {
         setUser(data.user);
       }
     } catch {

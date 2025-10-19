@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { User } from "../App";
+import { parseJson } from "../utils/api";
 import "./DashboardPage.css";
 
 type Quiz = {
@@ -47,8 +48,8 @@ const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
       if (!response.ok) {
         throw new Error("Impossible de récupérer les quizzes.");
       }
-      const data = (await response.json()) as { quizzes?: Quiz[] };
-      setQuizzes(data.quizzes || []);
+      const data = await parseJson<{ quizzes?: Quiz[] }>(response);
+      setQuizzes(data?.quizzes || []);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : String(error));
     } finally {
@@ -104,8 +105,8 @@ const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
       if (!response.ok) {
         throw new Error("La création du quiz a échoué.");
       }
-      const data = await response.json();
-      const quizTitle = (data?.quiz?.quiz_title as string | undefined) ?? "Nouveau quiz";
+      const data = await parseJson<{ quiz?: Quiz }>(response);
+      const quizTitle = data?.quiz?.quiz_title ?? "Nouveau quiz";
       setStatusMessage(`Quiz « ${quizTitle} » créé.`);
     });
   }, [runAction]);
@@ -130,6 +131,7 @@ const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
         if (!response.ok) {
           throw new Error("La duplication a échoué.");
         }
+        await parseJson(response);
         setStatusMessage(`Quiz copié sous le nom « ${title || suggestion} ».`);
       });
     },
@@ -152,6 +154,7 @@ const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
         if (!response.ok) {
           throw new Error("La suppression a échoué.");
         }
+        await parseJson(response);
         setStatusMessage(`Quiz « ${quiz.quiz_title || "Quiz"} » supprimé.`);
       });
     },
@@ -174,6 +177,7 @@ const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
         if (!response.ok) {
           throw new Error("Impossible de déverrouiller ce quiz.");
         }
+        await parseJson(response);
         setStatusMessage(`Quiz « ${quiz.quiz_title || "Quiz"} » déverrouillé.`);
       });
     },
