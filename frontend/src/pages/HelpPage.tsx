@@ -134,33 +134,33 @@ const HelpPage = ({ user, onBack, onLogout, onNavigateSettings }: HelpPageProps)
   };
 
   return (
-    <div className="help">
-      <header className="help__hero">
-        <div className="help__hero-content">
-          <div className="help__hero-headline">
-            <span className="help__eyebrow">Radi Quiz</span>
+    <div className="help app-page">
+      <header className="help__hero app-hero">
+        <div className="help__hero-content app-hero__content">
+          <div className="help__hero-headline app-hero__headline">
+            <span className="help__eyebrow app-eyebrow">Radi Quiz</span>
             <h1>Centre d’aide</h1>
             <p>
               Retrouvez les étapes clés pour préparer vos évaluations, recherchez des réponses rapides et contactez notre
               équipe support en cas de besoin.
             </p>
           </div>
-          <div className="help__hero-actions">
-            <button className="help__secondary" onClick={onBack}>
+          <div className="help__hero-actions app-hero__actions">
+            <button className="app-button app-button--secondary" onClick={onBack}>
               Retour au tableau de bord
             </button>
-            <button className="help__secondary" onClick={onNavigateSettings}>
+            <button className="app-button app-button--secondary" onClick={onNavigateSettings}>
               Paramètres
             </button>
-            <button className="help__secondary" onClick={onLogout}>
+            <button className="app-button app-button--secondary" onClick={onLogout}>
               Déconnexion
             </button>
           </div>
         </div>
       </header>
 
-      <main className="help__main">
-        <section className="help__section">
+      <main className="help__main app-main">
+        <section className="help__section app-card">
           <div className="help__section-header">
             <h2>Guides rapides</h2>
             <p>Suivez ces étapes pour maîtriser les principaux workflows de Radi Quiz.</p>
@@ -179,7 +179,7 @@ const HelpPage = ({ user, onBack, onLogout, onNavigateSettings }: HelpPageProps)
           </div>
         </section>
 
-        <section className="help__section">
+        <section className="help__section app-card">
           <div className="help__section-header">
             <h2>Questions fréquentes</h2>
             <p>Trouvez rapidement des réponses aux questions les plus courantes.</p>
@@ -194,7 +194,7 @@ const HelpPage = ({ user, onBack, onLogout, onNavigateSettings }: HelpPageProps)
           </div>
         </section>
 
-        <section className="help__section help__section--contact">
+        <section className="help__section help__section--contact app-card">
           <div className="help__section-header">
             <h2>Contactez le support</h2>
             <p>
@@ -232,12 +232,12 @@ const HelpPage = ({ user, onBack, onLogout, onNavigateSettings }: HelpPageProps)
               />
             </label>
             <div className="help__actions">
-              <button className="help__primary" type="submit" disabled={sending}>
+              <button className="app-button app-button--primary" type="submit" disabled={sending}>
                 Envoyer
               </button>
             </div>
-            {status ? <div className="help__status">{status}</div> : null}
-            {error ? <div className="help__error">{error}</div> : null}
+            {status ? <div className="app-status">{status}</div> : null}
+            {error ? <div className="app-error">{error}</div> : null}
           </form>
         </section>
       </main>

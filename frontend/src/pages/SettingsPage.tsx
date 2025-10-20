@@ -676,33 +676,33 @@ const SettingsPage = ({ user, onBack, onLogout, onUserUpdate, onNavigateHelp }: 
   );
 
   return (
-    <div className="settings">
-      <header className="settings__hero">
-        <div className="settings__hero-content">
-          <div className="settings__hero-headline">
-            <span className="settings__eyebrow">Radi Quiz</span>
+    <div className="settings app-page">
+      <header className="settings__hero app-hero">
+        <div className="settings__hero-content app-hero__content">
+          <div className="settings__hero-headline app-hero__headline">
+            <span className="settings__eyebrow app-eyebrow">Radi Quiz</span>
             <h1>Paramètres du compte</h1>
             <p>
               Personnalisez votre établissement, maintenez vos listes d’étudiants et gérez vos informations
               d’instructeur. Toutes les modifications sont synchronisées avec votre espace sécurisé.
             </p>
           </div>
-          <div className="settings__hero-actions">
-            <button className="settings__secondary" onClick={onBack}>
+          <div className="settings__hero-actions app-hero__actions">
+            <button className="app-button app-button--secondary" onClick={onBack}>
               Retour au tableau de bord
             </button>
-            <button className="settings__secondary" onClick={onNavigateHelp}>
+            <button className="app-button app-button--secondary" onClick={onNavigateHelp}>
               Centre d'aide
             </button>
-            <button className="settings__secondary" onClick={onLogout}>
+            <button className="app-button app-button--secondary" onClick={onLogout}>
               Déconnexion
             </button>
           </div>
         </div>
       </header>
 
-      <main className="settings__main">
-        <section className="settings__section">
+      <main className="settings__main app-main">
+        <section className="settings__section app-card">
           <div className="settings__section-header">
             <h2>Informations de l’instructeur</h2>
             <p>
@@ -735,16 +735,16 @@ const SettingsPage = ({ user, onBack, onLogout, onUserUpdate, onNavigateHelp }: 
               </label>
             </div>
             <div className="settings__actions">
-              <button className="settings__primary" type="submit" disabled={profileBusy}>
+              <button className="app-button app-button--primary settings__primary" type="submit" disabled={profileBusy}>
                 Enregistrer le profil
               </button>
             </div>
-            {profileMessage ? <div className="settings__status">{profileMessage}</div> : null}
-            {profileError ? <div className="settings__error">{profileError}</div> : null}
+            {profileMessage ? <div className="app-status">{profileMessage}</div> : null}
+            {profileError ? <div className="app-error">{profileError}</div> : null}
           </form>
         </section>
 
-        <section className="settings__section">
+        <section className="settings__section app-card">
           <div className="settings__section-header">
             <h2>Paramètres généraux des quizzes</h2>
             <p>
@@ -820,16 +820,16 @@ const SettingsPage = ({ user, onBack, onLogout, onUserUpdate, onNavigateHelp }: 
               </small>
             </label>
             <div className="settings__actions">
-              <button className="settings__primary" type="submit" disabled={defaultsBusy}>
+              <button className="app-button app-button--primary settings__primary" type="submit" disabled={defaultsBusy}>
                 Enregistrer les paramètres
               </button>
             </div>
-            {defaultsMessage ? <div className="settings__status">{defaultsMessage}</div> : null}
-            {defaultsError ? <div className="settings__error">{defaultsError}</div> : null}
+            {defaultsMessage ? <div className="app-status">{defaultsMessage}</div> : null}
+            {defaultsError ? <div className="app-error">{defaultsError}</div> : null}
           </form>
         </section>
 
-        <section className="settings__section">
+        <section className="settings__section app-card">
           <div className="settings__section-header">
             <h2>Listes d’étudiants</h2>
             <p>
@@ -852,17 +852,17 @@ const SettingsPage = ({ user, onBack, onLogout, onUserUpdate, onNavigateHelp }: 
               <input type="file" accept=".csv" onChange={handleClassFileChange} />
             </label>
             <div className="settings__actions">
-              <button className="settings__primary" type="submit" disabled={classCreationBusy}>
+              <button className="app-button app-button--primary settings__primary" type="submit" disabled={classCreationBusy}>
                 Ajouter une classe
               </button>
             </div>
-            {classCreationError ? <div className="settings__error">{classCreationError}</div> : null}
+            {classCreationError ? <div className="app-error">{classCreationError}</div> : null}
           </form>
 
           {classesLoading ? (
             <div className="settings__placeholder">Chargement des classes…</div>
           ) : classesError ? (
-            <div className="settings__error">{classesError}</div>
+            <div className="app-error">{classesError}</div>
           ) : sortedClasses.length === 0 ? (
             <div className="settings__placeholder">Aucune classe pour le moment.</div>
           ) : (
@@ -887,6 +887,7 @@ const SettingsPage = ({ user, onBack, onLogout, onUserUpdate, onNavigateHelp }: 
                       <div className="settings__class-actions">
                         <button
                           type="button"
+                          className="app-button app-button--ghost"
                           onClick={() => handleClassDownload(classItem.list_uuid)}
                         >
                           Télécharger CSV
@@ -901,14 +902,18 @@ const SettingsPage = ({ user, onBack, onLogout, onUserUpdate, onNavigateHelp }: 
                             }
                           />
                         </label>
-                        <button type="button" onClick={() => handleClassDelete(classItem)}>
+                        <button
+                          type="button"
+                          className="app-button app-button--danger"
+                          onClick={() => handleClassDelete(classItem)}
+                        >
                           Supprimer
                         </button>
                       </div>
                     </header>
                     {isExpanded ? (
                       <div className="settings__class-body">
-                        {state?.error ? <div className="settings__error">{state.error}</div> : null}
+                        {state?.error ? <div className="app-error">{state.error}</div> : null}
                         {state?.loading ? (
                           <div className="settings__placeholder">Chargement…</div>
                         ) : state ? (
@@ -927,6 +932,7 @@ const SettingsPage = ({ user, onBack, onLogout, onUserUpdate, onNavigateHelp }: 
                                 <h3>Étudiants</h3>
                                 <button
                                   type="button"
+                                  className="app-button app-button--secondary"
                                   onClick={() => handleAddStudent(classItem.list_uuid)}
                                   disabled={state.saving}
                                 >
@@ -970,6 +976,7 @@ const SettingsPage = ({ user, onBack, onLogout, onUserUpdate, onNavigateHelp }: 
                                     />
                                     <button
                                       type="button"
+                                      className="app-button app-button--ghost"
                                       onClick={() => handleRemoveStudent(classItem.list_uuid, index)}
                                       disabled={state.saving}
                                     >
@@ -985,7 +992,7 @@ const SettingsPage = ({ user, onBack, onLogout, onUserUpdate, onNavigateHelp }: 
                               </div>
                               <div className="settings__actions">
                                 <button
-                                  className="settings__primary"
+                                  className="app-button app-button--primary settings__primary"
                                   type="button"
                                   onClick={() => saveClassChanges(classItem.list_uuid)}
                                   disabled={state.saving || !state.dirty}
@@ -1007,7 +1014,7 @@ const SettingsPage = ({ user, onBack, onLogout, onUserUpdate, onNavigateHelp }: 
           )}
         </section>
 
-        <section className="settings__section">
+        <section className="settings__section app-card">
           <div className="settings__section-header">
             <h2>Gestion de l’e-mail</h2>
             <p>
@@ -1022,7 +1029,7 @@ const SettingsPage = ({ user, onBack, onLogout, onUserUpdate, onNavigateHelp }: 
                 <input type="email" name="new_email" placeholder="exemple@universite.fr" required />
               </label>
               <div className="settings__actions">
-                <button className="settings__primary" type="submit" disabled={emailRequestBusy}>
+                <button className="app-button app-button--primary settings__primary" type="submit" disabled={emailRequestBusy}>
                   Envoyer le code
                 </button>
               </div>
@@ -1038,22 +1045,22 @@ const SettingsPage = ({ user, onBack, onLogout, onUserUpdate, onNavigateHelp }: 
                 />
               </label>
               <div className="settings__actions">
-                <button className="settings__primary" type="submit" disabled={emailVerifyBusy}>
+                <button className="app-button app-button--primary settings__primary" type="submit" disabled={emailVerifyBusy}>
                   Confirmer le changement
                 </button>
               </div>
             </form>
           </div>
           {pendingEmail ? (
-            <div className="settings__status">
+            <div className="app-status">
               Un code a été envoyé à <strong>{pendingEmail}</strong>. Veuillez le saisir pour confirmer.
             </div>
           ) : null}
-          {emailChangeMessage ? <div className="settings__status">{emailChangeMessage}</div> : null}
-          {emailChangeError ? <div className="settings__error">{emailChangeError}</div> : null}
+          {emailChangeMessage ? <div className="app-status">{emailChangeMessage}</div> : null}
+          {emailChangeError ? <div className="app-error">{emailChangeError}</div> : null}
         </section>
 
-        <section className="settings__section">
+        <section className="settings__section app-card">
           <div className="settings__section-header">
             <h2>Mot de passe</h2>
             <p>
@@ -1075,16 +1082,16 @@ const SettingsPage = ({ user, onBack, onLogout, onUserUpdate, onNavigateHelp }: 
               <input type="password" name="confirm_password" required minLength={8} />
             </label>
             <div className="settings__actions">
-              <button className="settings__primary" type="submit" disabled={passwordBusy}>
+              <button className="app-button app-button--primary settings__primary" type="submit" disabled={passwordBusy}>
                 Mettre à jour le mot de passe
               </button>
             </div>
-            {passwordMessage ? <div className="settings__status">{passwordMessage}</div> : null}
-            {passwordError ? <div className="settings__error">{passwordError}</div> : null}
+            {passwordMessage ? <div className="app-status">{passwordMessage}</div> : null}
+            {passwordError ? <div className="app-error">{passwordError}</div> : null}
           </form>
         </section>
 
-        <section className="settings__section">
+        <section className="settings__section app-card">
           <div className="settings__section-header">
             <h2>Données et compte</h2>
             <p>
@@ -1094,11 +1101,11 @@ const SettingsPage = ({ user, onBack, onLogout, onUserUpdate, onNavigateHelp }: 
           </div>
           <div className="settings__form settings__form--narrow">
             <div className="settings__actions">
-              <button className="settings__secondary" type="button" onClick={handleDownloadData}>
+              <button className="app-button app-button--secondary settings__secondary" type="button" onClick={handleDownloadData}>
                 Télécharger toutes mes données
               </button>
               <button
-                className="settings__danger"
+                className="app-button app-button--danger settings__danger"
                 type="button"
                 onClick={handleDeleteAccount}
                 disabled={deleteBusy}
@@ -1106,7 +1113,7 @@ const SettingsPage = ({ user, onBack, onLogout, onUserUpdate, onNavigateHelp }: 
                 Supprimer mon compte
               </button>
             </div>
-            {deleteError ? <div className="settings__error">{deleteError}</div> : null}
+            {deleteError ? <div className="app-error">{deleteError}</div> : null}
           </div>
         </section>
       </main>

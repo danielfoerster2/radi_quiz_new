@@ -180,42 +180,42 @@ const DashboardPage = ({ user, onLogout, onNavigateSettings, onNavigateHelp, onO
   const isEmpty = !loading && quizzes.length === 0;
 
   return (
-    <div className="dashboard">
-      <header className="dashboard__hero">
-        <div className="dashboard__hero-content">
-          <div className="dashboard__hero-headline">
-            <span className="dashboard__eyebrow">Radi Quiz</span>
+    <div className="dashboard app-page">
+      <header className="app-hero">
+        <div className="app-hero__content">
+          <div className="app-hero__headline">
+            <span className="app-eyebrow">Radi Quiz</span>
             <h1>Bienvenue, {user.email}</h1>
             <p>
-              Créez, dupliquez et suivez vos sujets AMC depuis un seul espace. Tous vos quizzes et ressources
-              restent chiffrés tant que vous êtes déconnecté.
+              Créez, dupliquez et suivez vos sujets AMC depuis un seul espace. Tous vos quizzes et ressources restent
+              chiffrés tant que vous êtes déconnecté.
             </p>
           </div>
-          <div className="dashboard__hero-actions">
-            <button className="dashboard__primary" onClick={handleCreateQuiz} disabled={actionBusy}>
+          <div className="app-hero__actions">
+            <button className="app-button app-button--primary" onClick={handleCreateQuiz} disabled={actionBusy}>
               Nouveau quiz
             </button>
-            <button className="dashboard__secondary" onClick={onNavigateHelp}>
+            <button className="app-button app-button--secondary" onClick={onNavigateHelp}>
               Centre d'aide
             </button>
-            <button className="dashboard__secondary" onClick={onNavigateSettings}>
+            <button className="app-button app-button--secondary" onClick={onNavigateSettings}>
               Paramètres
             </button>
-            <button className="dashboard__secondary" onClick={onLogout}>
+            <button className="app-button app-button--secondary" onClick={onLogout}>
               Déconnexion
             </button>
           </div>
         </div>
       </header>
 
-      <main className="dashboard__main">
-        {statusMessage ? <div className="dashboard__status">{statusMessage}</div> : null}
-        {errorMessage ? <div className="dashboard__error">{errorMessage}</div> : null}
+      <main className="app-main">
+        {statusMessage ? <div className="app-status">{statusMessage}</div> : null}
+        {errorMessage ? <div className="app-error">{errorMessage}</div> : null}
 
-        <section className="dashboard__quizzes" aria-live="polite">
-          <div className="dashboard__quizzes-header">
-            <h2>Vos quizzes</h2>
-            <button onClick={loadQuizzes} className="dashboard__refresh" disabled={loading || actionBusy}>
+        <section className="dashboard__quizzes app-card" aria-live="polite">
+          <div className="dashboard__quizzes-header app-toolbar">
+            <h2 className="app-section-title">Vos quizzes</h2>
+            <button onClick={loadQuizzes} className="app-button app-button--secondary" disabled={loading || actionBusy}>
               Actualiser
             </button>
           </div>
@@ -232,42 +232,46 @@ const DashboardPage = ({ user, onLogout, onNavigateSettings, onNavigateHelp, onO
                 const isLocked = quiz.quiz_state === "locked";
                 return (
                   <li key={quiz.quiz_uuid} className="dashboard__list-item">
-                    <div className="dashboard__list-header">
-                      <h3>{quiz.quiz_title || "Sans titre"}</h3>
-                      <span
-                        className={`dashboard__badge ${
-                          isLocked ? "dashboard__badge--locked" : "dashboard__badge--unlocked"
-                        }`}
-                      >
+                    <div className="dashboard__item-header">
+                      <div>
+                        <h3>{quiz.quiz_title || "Sans titre"}</h3>
+                        <p className="dashboard__item-subtitle">
+                          Créé le {formatDate(quiz.creation_date)} · {quiz.number_of_questions} question
+                          {quiz.number_of_questions > 1 ? "s" : ""}
+                        </p>
+                      </div>
+                      <span className={`app-badge ${isLocked ? "app-badge--danger" : "app-badge--success"}`}>
                         {isLocked ? "Verrouillé" : "En édition"}
                       </span>
                     </div>
-                    <dl className="dashboard__meta">
-                      <div>
-                        <dt>Créé le</dt>
-                        <dd>{formatDate(quiz.creation_date)}</dd>
-                      </div>
-                      <div>
-                        <dt>Questions</dt>
-                        <dd>{quiz.number_of_questions}</dd>
-                      </div>
-                      <div>
-                        <dt>Identifiant</dt>
-                        <dd className="dashboard__quiz-id">{quiz.quiz_uuid}</dd>
-                      </div>
-                    </dl>
                     <div className="dashboard__actions">
-                      <button onClick={() => onOpenQuiz(quiz.quiz_uuid)} disabled={actionBusy}>
+                      <button
+                        className="app-button app-button--ghost"
+                        onClick={() => onOpenQuiz(quiz.quiz_uuid)}
+                        disabled={actionBusy}
+                      >
                         Ouvrir
                       </button>
-                      <button onClick={() => handleDuplicateQuiz(quiz)} disabled={actionBusy}>
+                      <button
+                        className="app-button app-button--ghost"
+                        onClick={() => handleDuplicateQuiz(quiz)}
+                        disabled={actionBusy}
+                      >
                         Dupliquer
                       </button>
-                      <button onClick={() => handleDeleteQuiz(quiz)} disabled={actionBusy}>
+                      <button
+                        className="app-button app-button--ghost"
+                        onClick={() => handleDeleteQuiz(quiz)}
+                        disabled={actionBusy}
+                      >
                         Supprimer
                       </button>
                       {isLocked ? (
-                        <button onClick={() => handleUnlockQuiz(quiz)} disabled={actionBusy}>
+                        <button
+                          className="app-button app-button--ghost"
+                          onClick={() => handleUnlockQuiz(quiz)}
+                          disabled={actionBusy}
+                        >
                           Déverrouiller
                         </button>
                       ) : null}
