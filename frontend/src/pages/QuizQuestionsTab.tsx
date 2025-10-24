@@ -49,7 +49,33 @@ type NewQuestionState = {
 
 type UpdateAnswerOptions = {
   silent?: boolean;
+  allowWhileLocked?: boolean;
+  message?: string;
 };
+
+type AiDifficulty = "easy" | "average" | "hard";
+
+type AiFormState = {
+  subjectChoice: string;
+  subjectTitle: string;
+  topic: string;
+  difficulty: AiDifficulty;
+  questionType: QuestionType;
+  quantity: string;
+  language: string;
+  context: string;
+};
+
+const aiDifficultyOptions: { value: AiDifficulty; label: string }[] = [
+  { value: "easy", label: "Facile" },
+  { value: "average", label: "Intermédiaire" },
+  { value: "hard", label: "Difficile" },
+];
+
+const aiLanguageOptions: { value: string; label: string }[] = [
+  { value: "fr", label: "Français" },
+  { value: "en", label: "Anglais" },
+];
 
 const questionTypeOptions: { value: QuestionType; label: string }[] = [
   { value: "simple", label: "Question simple (une réponse juste)" },
@@ -58,6 +84,77 @@ const questionTypeOptions: { value: QuestionType; label: string }[] = [
 ];
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+let pdfModulePromise: Promise<any> | null = null;
+
+const loadPdfModule = async () => {
+  if (!pdfModulePromise) {
+    pdfModulePromise = Promise.all([
+      import("pdfjs-dist/legacy/build/pdf"),
+      import("pdfjs-dist/legacy/build/pdf.worker?url"),
+    ]).then(([pdfLib, workerSrc]) => {
+      const pdfjs = pdfLib as any;
+      const worker = (workerSrc as any)?.default ?? workerSrc;
+      if (worker) {
+        pdfjs.GlobalWorkerOptions.workerSrc = worker;
+      }
+      return pdfjs;
+    });
+  }
+  return pdfModulePromise;
+};
+
+const extractPdfText = async (file: File): Promise<string> => {
+  const pdfjs = await loadPdfModule();
+  const data = new Uint8Array(await file.arrayBuffer());
+  const loadingTask = pdfjs.getDocument({ data });
+  const pdf = await loadingTask.promise;
+  let collected = "";
+  try {
+    for (let pageIndex = 1; pageIndex <= pdf.numPages; pageIndex += 1) {
+      const page = await pdf.getPage(pageIndex);
+      const content = await page.getTextContent();
+      const pageText = (content.items as any[])
+        .map((item) => (typeof item?.str === "string" ? item.str : ""))
+        .join(" ");
+      collected += `${pageText}\n\n`;
+    }
+  } finally {
+    pdf.cleanup?.();
+    pdf.destroy?.();
+  }
+  const trimmed = collected.trim();
+  if (!trimmed) {
+    throw new Error("Impossible d'extraire du texte du PDF fourni.");
+  }
+  return trimmed;
+};
+
+const readSupplementalFile = async (file: File): Promise<string> => {
+  const filename = file.name.toLowerCase();
+  if (filename.endsWith(".pdf")) {
+    return extractPdfText(file);
+  }
+  if (filename.endsWith(".txt") || file.type.startsWith("text/")) {
+    const text = await file.text();
+    const trimmed = text.trim();
+    if (!trimmed) {
+      throw new Error("Le fichier texte est vide.");
+    }
+    return trimmed;
+  }
+  throw new Error("Format non pris en charge. Importez un fichier .txt ou .pdf.");
+};
+
+const formatFileSize = (sizeBytes: number): string => {
+  if (sizeBytes >= 1024 * 1024) {
+    return `${(sizeBytes / (1024 * 1024)).toFixed(1)} Mo`;
+  }
+  if (sizeBytes >= 1024) {
+    return `${Math.round(sizeBytes / 1024)} ko`;
+  }
+  return `${sizeBytes} o`;
+};
 
 const normalizeSubjects = (input?: any[]): Subject[] =>
   (input ?? []).map((subject) => ({
@@ -184,9 +281,6 @@ const QuestionCard = ({
 
   const handleSaveQuestion = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (isLocked) {
-      return;
-    }
     const payload: Record<string, unknown> = {};
     const trimmedText = draftText.trim();
     if (!trimmedText) {
@@ -224,12 +318,24 @@ const QuestionCard = ({
       }
     }
 
-    if (Object.keys(payload).length === 0) {
+    if (Object.keys(payload).length === 0 && !isLocked) {
       return;
     }
 
+    let nextPayload = payload;
+    let message = "Question mise à jour.";
+    if (isLocked) {
+      const allowedKeys = new Set(["points"]);
+      const allowedEntries = Object.entries(payload).filter(([key]) => allowedKeys.has(key));
+      if (allowedEntries.length === 0) {
+        return;
+      }
+      nextPayload = Object.fromEntries(allowedEntries);
+      message = "Barème mis à jour.";
+    }
+
     setSavingQuestion(true);
-    await onUpdateQuestion(question.question_uuid, payload, "Question mise à jour.");
+    await onUpdateQuestion(question.question_uuid, nextPayload, message);
     setSavingQuestion(false);
   };
 
@@ -245,7 +351,7 @@ const QuestionCard = ({
   };
 
   const handleSaveAnswer = async (answer: Answer) => {
-    if (isLocked) return;
+    if (isLocked && question.question_type !== "open") return;
     const text = (answerDrafts[answer.answer_uuid] ?? "").trim();
     if (!text) {
       return;
@@ -258,21 +364,32 @@ const QuestionCard = ({
       return;
     }
     setSavingAnswer(answer.answer_uuid);
-    await onUpdateAnswer(question.question_uuid, answer.answer_uuid, payload);
+    await onUpdateAnswer(question.question_uuid, answer.answer_uuid, payload, {
+      allowWhileLocked: question.question_type === "open",
+    });
     setSavingAnswer(null);
   };
 
   const handleToggleCorrect = async (answer: Answer, nextCorrect: boolean) => {
-    if (isLocked) return;
     setSavingAnswer(answer.answer_uuid);
     if (question.question_type === "simple" && nextCorrect) {
       for (const other of question.answers) {
         if (other.answer_uuid !== answer.answer_uuid && other.correct) {
-          await onUpdateAnswer(question.question_uuid, other.answer_uuid, { correct: false }, { silent: true });
+          await onUpdateAnswer(
+            question.question_uuid,
+            other.answer_uuid,
+            { correct: false },
+            { silent: true, allowWhileLocked: true }
+          );
         }
       }
     }
-    await onUpdateAnswer(question.question_uuid, answer.answer_uuid, { correct: nextCorrect });
+    await onUpdateAnswer(
+      question.question_uuid,
+      answer.answer_uuid,
+      { correct: nextCorrect },
+      { allowWhileLocked: true }
+    );
     setSavingAnswer(null);
   };
 
@@ -401,7 +518,7 @@ const QuestionCard = ({
               min={0}
               value={draftPoints}
               onChange={(event) => setDraftPoints(event.target.value)}
-              disabled={isLocked}
+              disabled={savingQuestion}
               required
             />
           </label>
@@ -467,7 +584,7 @@ const QuestionCard = ({
         </div>
 
         <div className="quiz-questions__form-actions">
-          <button type="submit" className="app-button app-button--primary" disabled={isLocked || savingQuestion}>
+          <button type="submit" className="app-button app-button--primary" disabled={savingQuestion}>
             Enregistrer la question
           </button>
           <button
@@ -495,14 +612,14 @@ const QuestionCard = ({
                     type="checkbox"
                     checked={answer.correct}
                     onChange={(event) => handleToggleCorrect(answer, event.target.checked)}
-                    disabled={isLocked || savingAnswer === answer.answer_uuid}
+                    disabled={savingAnswer === answer.answer_uuid}
                   />
                   <span>Bonne réponse</span>
                 </label>
                 <textarea
                   value={answerDrafts[answer.answer_uuid] ?? answer.answer_option}
                   onChange={(event) => handleAnswerTextChange(answer.answer_uuid, event.target.value)}
-                  disabled={isLocked || savingAnswer === answer.answer_uuid}
+                  disabled={savingAnswer === answer.answer_uuid || (isLocked && question.question_type !== "open")}
                   rows={2}
                 />
                 <div className="quiz-questions__answer-actions">
@@ -528,7 +645,7 @@ const QuestionCard = ({
                     type="button"
                     className="quiz-questions__text-button"
                     onClick={() => handleSaveAnswer(answer)}
-                    disabled={isLocked || savingAnswer === answer.answer_uuid}
+                    disabled={savingAnswer === answer.answer_uuid || (isLocked && question.question_type !== "open")}
                   >
                     Enregistrer
                   </button>
@@ -589,6 +706,19 @@ const QuestionsTab = ({ quizUuid, userUuid, isLocked, onQuizUpdated }: Questions
     points: "1",
     numberOfLines: "5",
   });
+  const [aiForm, setAiForm] = useState<AiFormState>({
+    subjectChoice: "",
+    subjectTitle: "",
+    topic: "",
+    difficulty: "average",
+    questionType: "simple",
+    quantity: "3",
+    language: "fr",
+    context: "",
+  });
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiContextLoading, setAiContextLoading] = useState(false);
+  const [aiUploadMeta, setAiUploadMeta] = useState<{ name: string; size: number } | null>(null);
 
   const fetchSubjects = useCallback(async (): Promise<Subject[]> => {
     const response = await fetch(`/quizzes/${quizUuid}/questions`, {
@@ -622,10 +752,28 @@ const QuestionsTab = ({ quizUuid, userUuid, isLocked, onQuizUpdated }: Questions
 
   useEffect(() => {
     setNewQuestion((prev) => {
-      if (prev.subjectChoice || subjects.length === 0) {
+      if (subjects.length === 0) {
+        if (prev.subjectChoice === "__new__") {
+          return prev;
+        }
+        return { ...prev, subjectChoice: "__new__" };
+      }
+      if (subjects.some((subject) => subject.subject_uuid === prev.subjectChoice)) {
         return prev;
       }
-      return { ...prev, subjectChoice: subjects[0].subject_uuid };
+      return { ...prev, subjectChoice: subjects[0].subject_uuid, subjectTitle: "" };
+    });
+    setAiForm((prev) => {
+      if (subjects.length === 0) {
+        if (prev.subjectChoice === "__new__") {
+          return prev;
+        }
+        return { ...prev, subjectChoice: "__new__" };
+      }
+      if (subjects.some((subject) => subject.subject_uuid === prev.subjectChoice)) {
+        return prev;
+      }
+      return { ...prev, subjectChoice: subjects[0].subject_uuid, subjectTitle: "" };
     });
   }, [subjects]);
 
@@ -671,22 +819,85 @@ const QuestionsTab = ({ quizUuid, userUuid, isLocked, onQuizUpdated }: Questions
     }));
   }, []);
 
+  const handleAiFieldChange = (key: keyof AiFormState) => (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const value = event.target.value;
+    setAiForm((prev) => {
+      switch (key) {
+        case "difficulty":
+          return { ...prev, difficulty: value as AiDifficulty };
+        case "questionType":
+          return { ...prev, questionType: value as QuestionType };
+        case "subjectChoice":
+          return {
+            ...prev,
+            subjectChoice: value,
+            subjectTitle: value === "__new__" ? prev.subjectTitle : "",
+          };
+        default:
+          return { ...prev, [key]: value } as AiFormState;
+      }
+    });
+  };
+
+  const handleAiClearUpload = () => {
+    setAiUploadMeta(null);
+  };
+
+  const handleAiFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || isLocked) {
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      setError("Le fichier dépasse la taille maximale de 5 Mo.");
+      setStatus(null);
+      return;
+    }
+    const lower = file.name.toLowerCase();
+    if (!lower.endsWith(".pdf") && !lower.endsWith(".txt")) {
+      setError("Format non pris en charge. Importez un fichier .pdf ou .txt.");
+      setStatus(null);
+      return;
+    }
+    setAiContextLoading(true);
+    setStatus(null);
+    try {
+      const contextText = await readSupplementalFile(file);
+      setAiForm((prev) => ({
+        ...prev,
+        context: contextText,
+      }));
+      setAiUploadMeta({ name: file.name, size: file.size });
+      setError(null);
+      setStatus("Support importé pour la génération IA.");
+    } catch (err) {
+      setAiUploadMeta(null);
+      setError(err instanceof Error ? err.message : "Impossible d'extraire le texte du fichier.");
+      setStatus(null);
+    } finally {
+      setAiContextLoading(false);
+    }
+  };
+
   const refreshSubjects = useCallback(
     async (message?: string) => {
-    try {
-      const updated = await fetchSubjects();
-      setSubjects(updated);
-      if (message) {
-        setStatus(message);
+      try {
+        const updated = await fetchSubjects();
+        setSubjects(updated);
+        if (message) {
+          setStatus(message);
+        }
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Impossible de mettre à jour la liste des questions.");
+        setStatus(null);
       }
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossible de mettre à jour la liste des questions.");
-      setStatus(null);
-    }
-  },
-  [fetchSubjects]
-);
+    },
+    [fetchSubjects]
+  );
 
   const handleCreateQuestion = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -762,10 +973,108 @@ const QuestionsTab = ({ quizUuid, userUuid, isLocked, onQuizUpdated }: Questions
     }
   };
 
+  const handleGenerateAiQuestions = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isLocked || aiGenerating) {
+      return;
+    }
+    const trimmedTopic = aiForm.topic.trim();
+    if (!trimmedTopic) {
+      setError("Précisez le thème ou chapitre à couvrir pour la génération IA.");
+      setStatus(null);
+      return;
+    }
+    const quantityValue = Number.parseInt(aiForm.quantity || "0", 10);
+    if (!Number.isFinite(quantityValue) || quantityValue <= 0) {
+      setError("Indiquez un nombre de questions valide (minimum 1).");
+      setStatus(null);
+      return;
+    }
+    const payload: Record<string, unknown> = {
+      topic: trimmedTopic,
+      language: aiForm.language || "fr",
+      difficulty: aiForm.difficulty,
+      question_type: aiForm.questionType,
+      quantity: quantityValue,
+      supplemental_context: aiForm.context.trim(),
+    };
+    let subjectLabel = "Section";
+    if (aiForm.subjectChoice === "__new__") {
+      const title = aiForm.subjectTitle.trim();
+      if (!title) {
+        setError("Indiquez le nom de la nouvelle section.");
+        setStatus(null);
+        return;
+      }
+      payload.subject_title = title;
+      subjectLabel = title;
+    } else if (aiForm.subjectChoice) {
+      payload.subject_uuid = aiForm.subjectChoice;
+      subjectLabel = subjectById[aiForm.subjectChoice]?.subject_title ?? subjectLabel;
+    }
+
+    setAiGenerating(true);
+    setError(null);
+    setStatus(null);
+    try {
+      const response = await fetch(`/quizzes/${quizUuid}/ai/questions`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await parseJson<{ questions?: Question[]; error?: string }>(response);
+      if (!response.ok) {
+        throw new Error(data?.error ?? "Impossible de générer des questions.");
+      }
+      const generatedCount = data?.questions?.length ?? 0;
+      const subjectFromPayload = data?.questions?.[0]?.subject_uuid;
+      if (subjectFromPayload) {
+        setAiForm((prev) => ({
+          ...prev,
+          subjectChoice: subjectFromPayload,
+          subjectTitle: "",
+        }));
+      }
+      setAiForm((prev) => ({
+        ...prev,
+        topic: "",
+      }));
+      const message =
+        generatedCount > 0
+          ? `${generatedCount} question${generatedCount > 1 ? "s" : ""} générée${generatedCount > 1 ? "s" : ""} dans « ${subjectLabel} ».`
+          : `Questions générées pour « ${subjectLabel} ».`;
+      await refreshSubjects(message);
+      if (onQuizUpdated) {
+        await onQuizUpdated();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossible de générer des questions.");
+      setStatus(null);
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   const updateQuestion = useCallback(
     async (questionUuid: string, payload: Record<string, unknown>, message?: string) => {
-      if (isLocked || Object.keys(payload).length === 0) {
+      if (Object.keys(payload).length === 0) {
         return false;
+      }
+      let body = payload;
+      let statusMessage = message;
+      if (isLocked) {
+        const allowedKeys = new Set(["points"]);
+        const filtered = Object.entries(payload).filter(([key]) => allowedKeys.has(key));
+        if (filtered.length === 0) {
+          return false;
+        }
+        body = Object.fromEntries(filtered);
+        if (!statusMessage) {
+          statusMessage = "Barème mis à jour.";
+        }
       }
       try {
         const response = await fetch(`/quizzes/${quizUuid}/questions/${questionUuid}`, {
@@ -774,13 +1083,13 @@ const QuestionsTab = ({ quizUuid, userUuid, isLocked, onQuizUpdated }: Questions
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(body),
         });
         const data = await parseJson<{ question?: Question; error?: string }>(response);
         if (!response.ok) {
           throw new Error(data?.error ?? "Impossible de mettre à jour la question.");
         }
-        await refreshSubjects(message);
+        await refreshSubjects(statusMessage ?? "Question mise à jour.");
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : "Impossible de mettre à jour la question.");
@@ -950,7 +1259,8 @@ const QuestionsTab = ({ quizUuid, userUuid, isLocked, onQuizUpdated }: Questions
 
   const updateAnswer = useCallback(
     async (questionUuid: string, answerUuid: string, payload: Record<string, unknown>, options: UpdateAnswerOptions = {}) => {
-      if (isLocked) return false;
+      if (Object.keys(payload).length === 0) return false;
+      if (isLocked && !options.allowWhileLocked) return false;
       try {
         const response = await fetch(`/quizzes/${quizUuid}/questions/${questionUuid}/answers/${answerUuid}`, {
           method: "PUT",
@@ -965,7 +1275,7 @@ const QuestionsTab = ({ quizUuid, userUuid, isLocked, onQuizUpdated }: Questions
           throw new Error(data?.error ?? "Impossible de mettre à jour la réponse.");
         }
         if (!options.silent) {
-          await refreshSubjects("Réponse mise à jour.");
+          await refreshSubjects(options.message ?? "Réponse mise à jour.");
         }
         return true;
       } catch (err) {
@@ -1089,6 +1399,11 @@ const QuestionsTab = ({ quizUuid, userUuid, isLocked, onQuizUpdated }: Questions
       subjectChoice: subjectUuid,
       subjectTitle: "",
     }));
+    setAiForm((prev) => ({
+      ...prev,
+      subjectChoice: subjectUuid,
+      subjectTitle: "",
+    }));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
@@ -1188,6 +1503,165 @@ const QuestionsTab = ({ quizUuid, userUuid, isLocked, onQuizUpdated }: Questions
         <div className="quiz-questions__form-actions">
           <button type="submit" className="app-button app-button--primary" disabled={isLocked || creatingQuestion}>
             Ajouter la question
+          </button>
+        </div>
+      </form>
+
+      <form className="quiz-questions__ai app-card" onSubmit={handleGenerateAiQuestions}>
+        <div className="quiz-questions__ai-header">
+          <h3>Générer des questions avec l'IA</h3>
+          <p>
+            Décrivez le thème ou fournissez un support de cours pour que l'assistant propose des questions adaptées à votre niveau de difficulté.
+          </p>
+        </div>
+
+        <div className="quiz-questions__grid">
+          <label className="quiz-questions__field">
+            <span>Section cible</span>
+            <select
+              value={aiForm.subjectChoice}
+              onChange={handleAiFieldChange("subjectChoice")}
+              disabled={isLocked || aiGenerating || aiContextLoading}
+            >
+              {subjects.map((subject) => (
+                <option key={subject.subject_uuid} value={subject.subject_uuid}>
+                  {subject.subject_title}
+                </option>
+              ))}
+              <option value="__new__">Créer une nouvelle section…</option>
+            </select>
+          </label>
+          {aiForm.subjectChoice === "__new__" ? (
+            <label className="quiz-questions__field">
+              <span>Nom de la nouvelle section</span>
+              <input
+                value={aiForm.subjectTitle}
+                onChange={handleAiFieldChange("subjectTitle")}
+                placeholder="Ex : Partie B — Probabilités"
+                disabled={isLocked || aiGenerating || aiContextLoading}
+                required
+              />
+            </label>
+          ) : null}
+          <label className="quiz-questions__field">
+            <span>Langue</span>
+            <select
+              value={aiForm.language}
+              onChange={handleAiFieldChange("language")}
+              disabled={isLocked || aiGenerating || aiContextLoading}
+            >
+              {aiLanguageOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="quiz-questions__field">
+            <span>Difficulté</span>
+            <select
+              value={aiForm.difficulty}
+              onChange={handleAiFieldChange("difficulty")}
+              disabled={isLocked || aiGenerating || aiContextLoading}
+            >
+              {aiDifficultyOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="quiz-questions__field">
+            <span>Type de question</span>
+            <select
+              value={aiForm.questionType}
+              onChange={handleAiFieldChange("questionType")}
+              disabled={isLocked || aiGenerating || aiContextLoading}
+            >
+              {questionTypeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="quiz-questions__field">
+            <span>Nombre de questions</span>
+            <input
+              type="number"
+              min={1}
+              max={25}
+              value={aiForm.quantity}
+              onChange={handleAiFieldChange("quantity")}
+              disabled={isLocked || aiGenerating || aiContextLoading}
+              required
+            />
+          </label>
+        </div>
+
+        <label className="quiz-questions__field">
+          <span>Thème ou chapitre à couvrir</span>
+          <input
+            value={aiForm.topic}
+            onChange={handleAiFieldChange("topic")}
+            placeholder="Ex : Théorème de Bayes et applications"
+            disabled={isLocked || aiGenerating}
+            required
+          />
+        </label>
+
+        <label className="quiz-questions__field">
+          <span>Contexte facultatif (sera partagé avec l'IA)</span>
+          <textarea
+            rows={4}
+            value={aiForm.context}
+            onChange={handleAiFieldChange("context")}
+            placeholder="Collez ici un résumé du cours ou des points clés importants."
+            disabled={isLocked || aiGenerating}
+          />
+        </label>
+
+        <div className="quiz-questions__ai-upload">
+          <label className="quiz-questions__upload">
+            <span>Importer un support (PDF ou TXT, ≤ 5 Mo)</span>
+            <input
+              type="file"
+              accept=".pdf,.txt"
+              onChange={handleAiFileChange}
+              disabled={isLocked || aiGenerating || aiContextLoading}
+            />
+          </label>
+          {aiUploadMeta ? (
+            <div className="quiz-questions__ai-upload-meta">
+              <span>
+                {aiUploadMeta.name} — {formatFileSize(aiUploadMeta.size)}
+              </span>
+              <button
+                type="button"
+                className="quiz-questions__text-button"
+                onClick={handleAiClearUpload}
+                disabled={aiGenerating || aiContextLoading}
+              >
+                Retirer
+              </button>
+            </div>
+          ) : null}
+        </div>
+
+        {aiContextLoading ? (
+          <div className="quiz-questions__ai-loading">
+            <div className="quiz__spinner" />
+            <span>Extraction du texte du support…</span>
+          </div>
+        ) : null}
+
+        <div className="quiz-questions__form-actions">
+          <button
+            type="submit"
+            className="app-button app-button--primary"
+            disabled={isLocked || aiGenerating || aiContextLoading}
+          >
+            Générer avec l&apos;IA
           </button>
         </div>
       </form>
