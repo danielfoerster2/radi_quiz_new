@@ -580,9 +580,10 @@ const SettingsPage = ({ user, onBack, onLogout, onUserUpdate, onNavigateHelp }: 
         throw new Error(data?.error ?? "Le code de vérification est invalide.");
       }
       setEmailChangeMessage(data?.message ?? "Adresse e-mail mise à jour.");
-      if (data?.email) {
-        onUserUpdate({ email: data.email });
-        setProfile((prev) => ({ ...prev, email: data.email }));
+      if (data && typeof data.email === "string" && data.email.trim()) {
+        const nextEmail = data.email.trim();
+        onUserUpdate({ email: nextEmail });
+        setProfile((prev) => ({ ...prev, email: nextEmail }));
       }
       setVerificationCode("");
       setPendingEmail("");
