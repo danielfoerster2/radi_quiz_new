@@ -179,15 +179,15 @@ This page uses tabs to manage quizzes.
 - `POST /auth/logout` – Terminate the session, re-encrypt user storage, and clear server-side session data.
 
 ### Account & Profile
-- `GET /me` – Fetch instructor profile details for the settings page.
-- `PUT /me` – Update instructor name fields stored in `user_defaults.sqlite`.
-- `GET /me/defaults` – Retrieve global quiz defaults (institution, instructions, messaging templates).
-- `PUT /me/defaults` – Persist edits to the global defaults back to `user_defaults.sqlite`.
-- `POST /me/email-change` – Initiate an email change by sending a verification code to the new address.
-- `POST /me/email-change/verify` – Confirm the change and update the `users.email` column.
-- `POST /me/password` – Change the password after validating the current credential.
-- `GET /me/export` – Produce a ZIP archive of the instructor workspace for download.
-- `DELETE /me` – Delete the account, associated databases, and on-disk assets.
+- `GET /account/me` – Fetch instructor profile details for the settings page.
+- `PUT /account/me` – Update instructor name fields stored in `user_defaults.sqlite`.
+- `GET /account/me/defaults` – Retrieve global quiz defaults (institution, instructions, messaging templates).
+- `PUT /account/me/defaults` – Persist edits to the global defaults back to `user_defaults.sqlite`.
+- `POST /account/me/email-change` – Initiate an email change by sending a verification code to the new address.
+- `POST /account/me/email-change/verify` – Confirm the change and update the `users.email` column.
+- `POST /account/me/password` – Change the password after validating the current credential.
+- `GET /account/me/export` – Produce a ZIP archive of the instructor workspace for download.
+- `DELETE /account/me` – Delete the account, associated databases, and on-disk assets.
 
 ### Classes & Rosters
 - `GET /classes` – List classes with their associated roster handles.

@@ -106,7 +106,7 @@ def create_app() -> Flask:
     )
 
     app.register_blueprint(auth_bp, url_prefix="/auth")
-    app.register_blueprint(account_bp)
+    app.register_blueprint(account_bp, url_prefix="/account")
     app.register_blueprint(classes_bp)
     app.register_blueprint(quizzes_bp)
     app.register_blueprint(questions_bp)
